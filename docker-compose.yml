@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: jackys_service_portal
+      POSTGRES_USER: jackys
+      POSTGRES_PASSWORD: jackys
+    ports:
+      - '5432:5432'
+    volumes:
+      - jackys-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U jackys -d jackys_service_portal']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  jackys-postgres-data:

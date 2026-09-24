@@ -1,0 +1,90 @@
+import express from 'express';
+import helmet from 'helmet';
+import swaggerUi from 'swagger-ui-express';
+import { z } from 'zod';
+import { createOpenApiDocument } from './api/openapi.js';
+import { problem } from './api/problem.js';
+import { createRouteCatalog, registerRoutes } from './api/route-catalog.js';
+import { createLocalAuth } from './auth/local-auth.js';
+
+function isProduction(): boolean {
+  return process.env.NODE_ENV === 'production';
+}
+
+function docsEnabled(): boolean {
+  return !isProduction() && process.env.OPENAPI_DOCS_ENABLED === 'true';
+}
+
+export function createApp() {
+  const app = express();
+  const authProvider = process.env.AUTH_PROVIDER || 'local';
+  const localAuth =
+    authProvider === 'local' && !isProduction()
+      ? createLocalAuth({ bootstrapToken: process.env.LOCAL_BOOTSTRAP_TOKEN })
+      : null;
+  const routes = createRouteCatalog(localAuth);
+
+  app.disable('x-powered-by');
+  app.use(helmet());
+  app.use(express.json({ limit: '1mb' }));
+
+  if (docsEnabled()) {
+    const openApiDocument = createOpenApiDocument(routes);
+    app.get('/api/openapi.json', (_request, response) => {
+      response.type('application/vnd.oai.openapi+json').json(openApiDocument);
+    });
+    app.use(
+      '/api/docs',
+      helmet({
+        contentSecurityPolicy: {
+          directives: {
+            'script-src': ["'self'", "'unsafe-inline'"],
+            'style-src': ["'self'", "'unsafe-inline'"],
+            'img-src': ["'self'", 'data:'],
+            'font-src': ["'self'", 'data:'],
+            'connect-src': ["'self'"],
+            'object-src': ["'none'"],
+            'frame-ancestors': ["'none'"],
+          },
+        },
+      }),
+      swaggerUi.serve,
+      swaggerUi.setup(openApiDocument, {
+        customSiteTitle: "Jacky's Service Portal API",
+        swaggerOptions: { url: '/api/openapi.json' },
+      }),
+    );
+  }
+
+  registerRoutes(app, routes);
+
+  app.use(
+    (
+      error: unknown,
+      _request: express.Request,
+      response: express.Response,
+      _next: express.NextFunction,
+    ) => {
+      if (error instanceof z.ZodError) {
+        problem(
+          response,
+          400,
+          'invalid-request',
+          'Invalid request',
+          'The request body is invalid.',
+        );
+        return;
+      }
+      console.error(error);
+      problem(
+        response,
+        500,
+        'internal-error',
+        'Internal Server Error',
+        'An unexpected error occurred.',
+      );
+    },
+  );
+
+  return app;
+}

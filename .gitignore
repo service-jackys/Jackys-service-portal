@@ -1,0 +1,18 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
+*.tmp
+.DS_Store
+.vscode/
+.idea/
+
+# Local migration exports and customer data
+exports/
+backups/
+*.xlsx
+*.xls
+*.csv
