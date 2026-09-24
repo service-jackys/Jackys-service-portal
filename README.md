@@ -17,30 +17,45 @@ The target architecture is:
 
 ## Local setup
 
-1. Copy `.env.example` to `.env` and provide only local or development values.
-2. Start PostgreSQL:
+### Windows CMD quick start
 
-   ```bash
-   docker compose up -d postgres
-   ```
+The current project folder is:
 
-3. Install dependencies and apply the database migrations:
+```text
+C:\Users\Vysakh Raju\Desktop\Jacky's\jackys service portal
+```
 
-   ```bash
-   npm install
-   npm run db:migrate
-   ```
+Use **Docker Desktop** for the local PostgreSQL service, then open **CMD** and run:
 
-   Migrations create an empty local schema and seed only roles and permission definitions. They do not import live Google Sheets or customer data.
+```cmd
+cd /d "C:\Users\Vysakh Raju\Desktop\Jacky's\jackys service portal"
+copy .env.example .env
+notepad .env
+npm install
+docker compose up -d postgres
+docker compose ps
+npm run db:migrate
+npm run dev
+```
 
-4. Start the API:
+In `.env`, keep `AUTH_PROVIDER=local` for local development and replace `LOCAL_BOOTSTRAP_TOKEN` with a random local-only value. Set `OPENAPI_DOCS_ENABLED=true` if you want to use the local Swagger documentation.
 
-   ```bash
-   npm run dev
-   ```
+Open these URLs after the API starts:
 
-5. Check `http://localhost:3000/health` or `http://localhost:3000/api`.
-6. Set `OPENAPI_DOCS_ENABLED=true` for local-only API documentation, then open `http://localhost:3000/api/docs` or `http://localhost:3000/api/openapi.json`.
+- API root: `http://localhost:3000/api`
+- Health check: `http://localhost:3000/health`
+- Swagger UI, when enabled: `http://localhost:3000/api/docs`
+- OpenAPI JSON, when enabled: `http://localhost:3000/api/openapi.json`
+
+To stop PostgreSQL without deleting the local database:
+
+```cmd
+docker compose down
+```
+
+Do not use `docker compose down -v` unless you intentionally want to delete the local database volume.
+
+Migrations create an empty local schema and seed only roles and permission definitions. They do not import live Google Sheets or customer data.
 
 The OpenAPI contract and Swagger UI are disabled by default and are always unavailable when `NODE_ENV=production`. Do not expose the local documentation or bootstrap endpoint publicly.
 
