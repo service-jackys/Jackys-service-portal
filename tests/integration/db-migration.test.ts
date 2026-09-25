@@ -26,8 +26,8 @@ test(
 
     const pool = createDbPool(databaseUrl);
     const client = await pool.connect();
-    let profileId: number | undefined;
-    let complaintId: number | undefined;
+    let profileId: string | undefined;
+    let complaintId: string | undefined;
 
     try {
       await client.query(
@@ -41,13 +41,13 @@ test(
       await client.query(`DELETE FROM profiles WHERE lower(email) = 'migration-test@example.test'`);
       await client.query(`DELETE FROM technicians WHERE name = 'Migration Technician'`);
 
-      const profile = await client.query<{ id: number }>(
+      const profile = await client.query<{ id: string }>(
         `INSERT INTO profiles (email, display_name)
        VALUES ('migration-test@example.test', 'Migration Test')
        RETURNING id`,
       );
       profileId = profile.rows[0].id;
-      assert.equal(typeof profileId, 'number');
+      assert.equal(typeof profileId, 'string');
 
       const role = await client.query<{ id: number }>(`SELECT id FROM roles WHERE code = 'admin'`);
       assert.equal(role.rowCount, 1);
@@ -66,7 +66,7 @@ test(
         /duplicate key/i,
       );
 
-      const technician = await client.query<{ id: number }>(
+      const technician = await client.query<{ id: string }>(
         `INSERT INTO technicians (name) VALUES ('Migration Technician') RETURNING id`,
       );
       await client.query(
@@ -83,14 +83,14 @@ test(
         /technician_availability_range_check/i,
       );
 
-      const complaint = await client.query<{ id: number }>(
+      const complaint = await client.query<{ id: string }>(
         `INSERT INTO complaints (
          complaint_reference, customer_type, customer_name, contact_number, description
        ) VALUES ('CMP-260924-901', 'individual', 'Migration Customer', '0500000000', 'Migration test complaint')
        RETURNING id`,
       );
       complaintId = complaint.rows[0].id;
-      assert.equal(typeof complaintId, 'number');
+      assert.equal(typeof complaintId, 'string');
 
       await client.query(
         `INSERT INTO legacy_references (

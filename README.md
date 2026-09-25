@@ -2,66 +2,221 @@
 
 This private repository is the migration workspace for replacing the current Google Apps Script service application with a normal web application.
 
+The live Google Apps Script application remains the production system. This local project is for development and testing only.
+
 ## Current status
 
-Phase 0 foundation is in progress. The live Apps Script application remains the production system and has not been changed.
+- Phase 0 foundation: complete and committed.
+- Phase 1 PostgreSQL persistence: implemented and verified locally.
+- Phase 2 complaint workflow: next development phase.
+- Production cutover: not started.
 
-The target architecture is:
+The local system currently provides an Express TypeScript API, PostgreSQL migrations, local-only authentication for development, OpenAPI/Swagger documentation, and the initial service-operations database schema.
 
-- TypeScript Node.js and Express API.
-- PostgreSQL, initially compatible with Supabase-hosted PostgreSQL.
-- Supabase Auth for identity and application-managed RBAC.
-- HTML/CSS/JavaScript with Tailwind CSS and Alpine.js for the web interface.
-- Supabase Storage for private attachments and workbook files.
-- Render deployment connected to a private GitHub repository.
+## Before you start
 
-## Local setup
+You need the following on the Windows computer:
 
-### Windows CMD quick start
+1. **Node.js LTS**, which provides `node` and `npm`.
+2. **Docker Desktop**, which provides Docker and Docker Compose.
+3. This repository downloaded or cloned to:
 
-The current project folder is:
+   ```text
+   C:\Users\Vysakh Raju\Desktop\Jacky's\jackys service portal
+   ```
 
-```text
-C:\Users\Vysakh Raju\Desktop\Jacky's\jackys service portal
-```
+You do not need to install PostgreSQL directly on Windows. PostgreSQL runs inside Docker.
 
-Use **Docker Desktop** for the local PostgreSQL service, then open **CMD** and run:
+## First-time setup
+
+Complete these steps only the first time, or when the project dependencies have been removed.
+
+### 1. Open a terminal
+
+You can use **Command Prompt** or **PowerShell**. The commands below use Command Prompt syntax because it handles the apostrophe in the folder name simply.
+
+Open Command Prompt from the Windows Start menu.
+
+### 2. Go to the project folder
 
 ```cmd
 cd /d "C:\Users\Vysakh Raju\Desktop\Jacky's\jackys service portal"
+```
+
+Check that the terminal is in the correct folder:
+
+```cmd
+dir package.json
+```
+
+You should see `package.json` in the output. If you do not, stop and correct the folder path before continuing.
+
+### 3. Check Node.js and npm
+
+```cmd
+node --version
+npm --version
+```
+
+If either command is not recognized, install Node.js LTS and reopen the terminal.
+
+### 4. Check Docker Desktop
+
+Start **Docker Desktop** from the Windows Start menu. Wait until Docker Desktop says that Docker is running.
+
+Then run:
+
+```cmd
+docker --version
+docker compose version
+docker info
+```
+
+The `docker info` command must show server information. If it says that it cannot connect to the Docker daemon, Docker Desktop is not ready yet.
+
+### 5. Install project dependencies
+
+```cmd
+npm install
+```
+
+This creates the local `node_modules` directory. Do not commit that directory.
+
+### 6. Create the local environment file
+
+```cmd
 copy .env.example .env
 notepad .env
-npm install
+```
+
+In Notepad, change this value to a random local-only token:
+
+```text
+LOCAL_BOOTSTRAP_TOKEN=replace-with-a-random-32-character-local-only-token
+```
+
+Keep these local development values:
+
+```text
+NODE_ENV=development
+AUTH_PROVIDER=local
+DATABASE_URL=postgresql://jackys:jackys@localhost:5432/jackys_service_portal
+EMAIL_ENABLED=false
+```
+
+Save and close Notepad. The `.env` file is ignored by Git and must never be committed.
+
+### 7. Start PostgreSQL in Docker
+
+From the project folder, run:
+
+```cmd
 docker compose up -d postgres
 docker compose ps
+```
+
+The PostgreSQL service may show `health: starting` for a few seconds. Wait until it shows `healthy` or run this readiness check:
+
+```cmd
+docker compose exec postgres pg_isready -U jackys -d jackys_service_portal
+```
+
+The successful result ends with:
+
+```text
+accepting connections
+```
+
+### 8. Apply the database migration
+
+```cmd
 npm run db:migrate
+```
+
+The first run should report:
+
+```text
+Applied migrations: 001
+```
+
+Run it a second time to confirm that migrations are safely repeatable:
+
+```cmd
+npm run db:migrate
+```
+
+The second run should report:
+
+```text
+No migrations to apply.
+```
+
+The migration creates an empty local schema and seed role/permission definitions. It does not import Google Sheets, customer data, or production files.
+
+## Starting the project after a normal PC restart
+
+Repeat these steps whenever you restart Windows. You do not need to run `npm install` again unless dependencies changed.
+
+### Terminal 1: Docker and PostgreSQL
+
+1. Start Docker Desktop and wait until it reports that Docker is running.
+2. Open Command Prompt.
+3. Run:
+
+```cmd
+cd /d "C:\Users\Vysakh Raju\Desktop\Jacky's\jackys service portal"
+docker info
+docker compose up -d postgres
+docker compose ps
+docker compose exec postgres pg_isready -U jackys -d jackys_service_portal
+npm run db:migrate
+```
+
+Leave this terminal available for database diagnostics.
+
+### Terminal 2: backend API
+
+Open a second Command Prompt window and run:
+
+```cmd
+cd /d "C:\Users\Vysakh Raju\Desktop\Jacky's\jackys service portal"
 npm run dev
 ```
 
-In `.env`, keep `AUTH_PROVIDER=local` for local development and replace `LOCAL_BOOTSTRAP_TOKEN` with a random local-only value. Set `OPENAPI_DOCS_ENABLED=true` if you want to use the local Swagger documentation.
+Keep this terminal running. The API uses `tsx watch`, so it automatically restarts after API source changes.
 
-Open these URLs after the API starts:
+A successful startup prints a message that the API is listening on port `3000`.
 
-- API root: `http://localhost:3000/api`
-- Health check: `http://localhost:3000/health`
-- Swagger UI, when enabled: `http://localhost:3000/api/docs`
-- OpenAPI JSON, when enabled: `http://localhost:3000/api/openapi.json`
+## Check that the backend is working
 
-To stop PostgreSQL without deleting the local database:
+With `npm run dev` still running, open these addresses in a browser:
 
-```cmd
-docker compose down
+- API root: <http://localhost:3000/>
+- API information: <http://localhost:3000/api>
+- Health check: <http://localhost:3000/health>
+- Swagger UI for local development: <http://localhost:3000/api/docs>
+- OpenAPI JSON: <http://localhost:3000/api/openapi.json>
+
+The health check is the most important first check. If it does not load, the backend is not reachable yet.
+
+Swagger and OpenAPI are enabled only when all of the following are true:
+
+- `NODE_ENV` is not `production`.
+- `OPENAPI_DOCS_ENABLED=true` is set in the environment.
+
+For local development, you can temporarily set this in `.env`:
+
+```text
+OPENAPI_DOCS_ENABLED=true
 ```
 
-Do not use `docker compose down -v` unless you intentionally want to delete the local database volume.
+Restart `npm run dev` after changing `.env`. Documentation must not be exposed on a production deployment.
 
-Migrations create an empty local schema and seed only roles and permission definitions. They do not import live Google Sheets or customer data.
+## Local authentication check
 
-The OpenAPI contract and Swagger UI are disabled by default and are always unavailable when `NODE_ENV=production`. Do not expose the local documentation or bootstrap endpoint publicly.
+Authentication is currently for local development only. It uses in-memory users and sessions, so users and sessions disappear when the backend restarts.
 
-### Local authentication bootstrap
-
-The local API defaults to `AUTH_PROVIDER=local` only outside production. Set a random, local-only `LOCAL_BOOTSTRAP_TOKEN` in `.env`, start the API, and use `POST /api/auth/bootstrap` once to create an in-memory admin session:
+Set a local token in `.env`, start the backend, and send one `POST` request to `/api/auth/bootstrap` with a body like this:
 
 ```json
 {
@@ -72,16 +227,111 @@ The local API defaults to `AUTH_PROVIDER=local` only outside production. Set a r
 }
 ```
 
-The response contains a bearer token for local API checks. Bootstrap is one-time per process, users and sessions are lost on restart, and the token must not be committed or reused outside local development. `AUTH_PROVIDER=local` is rejected by the app in production; the production path is reserved for Supabase Auth and must be wired before deployment.
+The response contains a bearer token for local API checks. Do not use this local authentication provider in production. Production authentication is reserved for Supabase Auth and has not been wired yet.
 
-Do not place credentials, customer exports, Google Apps Script deployment details, or `config.json` in this repository.
+## Run the verification checks
 
-## Migration principles
+Stop the backend with `Ctrl+C` only if you need to, then run these commands from the project folder:
 
-- Keep Apps Script running until the replacement passes workflow and data-reconciliation acceptance gates.
-- Migrate by capability, beginning with authentication, complaints, and scheduling.
-- Use PostgreSQL transactions and constraints instead of in-memory locks.
-- Keep protected files in private storage and enforce authorization on the server.
-- Preserve legacy complaint and appointment references during migration.
+```cmd
+npm test
+npm run typecheck
+npm run format:check
+npm run build
+```
 
-See `docs/migration/source-inventory.md` and `docs/architecture/target-architecture.md` for the Phase 0 baseline.
+The test suite must pass before considering a change complete. The PostgreSQL integration test must run against the Docker database rather than being skipped.
+
+## Troubleshooting
+
+### Docker command is not recognized
+
+Close and reopen the terminal after installing Docker Desktop. If it is still not recognized, restart Docker Desktop and check that Docker CLI is installed and available in the Windows PATH.
+
+### Docker cannot connect to the daemon
+
+Open Docker Desktop and wait for it to finish starting. Then retry:
+
+```cmd
+docker info
+```
+
+### PostgreSQL is still starting
+
+Wait a few seconds and run:
+
+```cmd
+docker compose ps
+docker compose exec postgres pg_isready -U jackys -d jackys_service_portal
+docker compose logs postgres
+```
+
+Do not delete the Docker volume while diagnosing a startup issue.
+
+### `npm` cannot find `package.json`
+
+The terminal is in the wrong folder. Run this exact command again:
+
+```cmd
+cd /d "C:\Users\Vysakh Raju\Desktop\Jacky's\jackys service portal"
+```
+
+Then verify with:
+
+```cmd
+dir package.json
+```
+
+### The browser displays `Cannot GET /` or the page does not load
+
+1. Confirm that `npm run dev` is still running.
+2. Confirm that the terminal says the API is listening on port `3000`.
+3. Open <http://localhost:3000/health> first.
+4. If the health check fails, stop the backend with `Ctrl+C` and run `npm run dev` again from the project folder.
+5. Check that another program is not already using port `3000`.
+
+### A migration fails
+
+Capture these outputs before changing files:
+
+```cmd
+docker compose ps -a
+docker compose logs postgres
+npm run db:migrate
+```
+
+Do not manually edit migration checksums and do not use `docker compose down -v` as a first troubleshooting step.
+
+## Stopping the project safely
+
+To stop the backend, go to its terminal and press `Ctrl+C`.
+
+To stop PostgreSQL without deleting the local database volume:
+
+```cmd
+cd /d "C:\Users\Vysakh Raju\Desktop\Jacky's\jackys service portal"
+docker compose down
+```
+
+Do **not** use the following unless you intentionally want to delete the local PostgreSQL database:
+
+```cmd
+docker compose down -v
+```
+
+## Git and security rules
+
+- Never commit `.env`, passwords, tokens, credentials, customer exports, deployment URLs, Drive IDs, or Supabase service-role keys.
+- Do not import live customer data into local development.
+- Do not change the live Apps Script deployment during this migration.
+- Keep Apps Script available as the production and rollback/read-only system until acceptance and reconciliation are complete.
+- Local authentication is not production-safe.
+
+## Project documents
+
+- `docs/RESUME_NOTES.md` — current state and the next resume sequence.
+- `docs/BUILD_STATUS.md` — capability and verification matrix.
+- `docs/DEVELOPMENT_PLAN.md` — planned phases through cutover and rollback.
+- `docs/architecture/target-architecture.md` — architecture and safety baseline.
+
+The next development capability after Phase1 is the Phase2 complaint workflow: contracts, authorization, public submission, reference generation, status transitions, audit history, and integration tests.
