@@ -70,3 +70,199 @@ export type ComplaintStatusUpdateInput = z.infer<typeof complaintStatusUpdateSch
 
 export type ComplaintStatus = (typeof complaintStatuses)[number];
 export type CustomerType = (typeof customerTypes)[number];
+
+export const appointmentStatuses = ['Scheduled', 'In Progress', 'Completed', 'Cancelled'] as const;
+export const appointmentStatusSchema = z.enum(appointmentStatuses);
+export type AppointmentStatus = (typeof appointmentStatuses)[number];
+
+export const customerWriteSchema = z
+  .object({
+    customerType: customerTypeSchema,
+    name: z.string().trim().min(1).max(200),
+    contactNumber: z.string().trim().min(1).max(50),
+    email: z.string().trim().email().max(320).optional(),
+    address: optionalText(500),
+    region: optionalText(120),
+  })
+  .strict();
+
+export const branchWriteSchema = z
+  .object({
+    customerId: z.string().regex(/^\d+$/).optional(),
+    name: z.string().trim().min(1).max(200),
+    contactPerson: optionalText(120),
+    contactNumber: z.string().trim().min(1).max(50).optional(),
+    address: optionalText(500),
+    region: optionalText(120),
+    customerNumber: optionalText(120),
+  })
+  .strict();
+
+export const technicianWriteSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120),
+    region: optionalText(120),
+    phone: optionalText(50),
+    email: z.string().trim().email().max(320).optional(),
+    active: z.boolean().optional(),
+  })
+  .strict();
+
+const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Time must use HH:mm format.');
+const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must use YYYY-MM-DD format.');
+
+export const availabilityWindowSchema = z
+  .object({
+    weekday: z.number().int().min(0).max(6),
+    startsAt: timeSchema,
+    endsAt: timeSchema,
+  })
+  .strict()
+  .refine((value) => value.startsAt < value.endsAt, {
+    message: 'Availability start time must be before its end time.',
+    path: ['endsAt'],
+  });
+
+export const technicianAvailabilitySchema = z
+  .object({ windows: z.array(availabilityWindowSchema).max(7) })
+  .strict()
+  .superRefine((value, context) => {
+    const weekdays = value.windows.map((window) => window.weekday);
+    if (new Set(weekdays).size !== weekdays.length) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Only one window is allowed per weekday.',
+      });
+    }
+  });
+
+export const appointmentCreateSchema = z
+  .object({
+    complaintId: z.string().regex(/^\d+$/).optional(),
+    customerId: z.string().regex(/^\d+$/).optional(),
+    branchId: z.string().regex(/^\d+$/).optional(),
+    technicianId: z.string().regex(/^\d+$/).optional(),
+    customerType: customerTypeSchema.optional(),
+    customerName: z.string().trim().min(1).max(200).optional(),
+    contactNumber: z.string().trim().min(1).max(50).optional(),
+    customerEmail: z.string().trim().email().max(320).optional(),
+    address: optionalText(500),
+    region: optionalText(120),
+    brand: optionalText(120),
+    model: optionalText(120),
+    itemCode: optionalText(120),
+    faultDescription: z.string().trim().min(1).max(10000).optional(),
+    jobWarranty: optionalText(120),
+    salesOrderNumber: optionalText(120),
+    appointmentDate: dateSchema,
+    appointmentTime: timeSchema,
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const standaloneFields = [
+      value.customerType,
+      value.customerName,
+      value.contactNumber,
+      value.faultDescription,
+    ];
+    const hasStandalone = standaloneFields.some((field) => field !== undefined);
+    if (value.complaintId && hasStandalone) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Linked appointments cannot include standalone customer fields.',
+      });
+    }
+    if (!value.complaintId && standaloneFields.some((field) => field === undefined)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'Standalone appointments require customerType, customerName, contactNumber, and faultDescription.',
+      });
+    }
+  });
+
+export const appointmentAssignmentSchema = z
+  .object({
+    technicianId: z.string().regex(/^\d+$/).nullable(),
+  })
+  .strict();
+export const appointmentStatusUpdateSchema = z
+  .object({ status: appointmentStatusSchema, reason: z.string().trim().max(1000).optional() })
+  .strict();
+export type AppointmentStatusUpdateInput = z.infer<typeof appointmentStatusUpdateSchema>;
+
+export const appointmentListQuerySchema = z
+  .object({
+    from: dateSchema.optional(),
+    to: dateSchema.optional(),
+    technicianId: z.string().regex(/^\d+$/).optional(),
+    branchId: z.string().regex(/^\d+$/).optional(),
+    complaintId: z.string().regex(/^\d+$/).optional(),
+    status: appointmentStatusSchema.optional(),
+    region: z.string().trim().min(1).max(120).optional(),
+    search: z.string().trim().min(1).max(200).optional(),
+    page: queryNumber(1, 1, 100000),
+    pageSize: queryNumber(25, 1, 100),
+  })
+  .strict()
+  .refine((value) => !value.from || !value.to || value.from <= value.to, {
+    message: 'The from date must be before or equal to the to date.',
+    path: ['to'],
+  });
+
+export const draftScheduleItemSchema = z
+  .object({
+    complaintId: z.string().regex(/^\d+$/),
+    technicianId: z.string().regex(/^\d+$/).optional(),
+    appointmentDate: dateSchema,
+    appointmentTime: timeSchema,
+  })
+  .strict();
+
+export const draftScheduleSchema = z
+  .object({ items: z.array(draftScheduleItemSchema).min(1).max(100) })
+  .strict();
+export const customerListQuerySchema = z
+  .object({
+    search: z.string().trim().min(1).max(200).optional(),
+    page: queryNumber(1, 1, 100000),
+    pageSize: queryNumber(25, 1, 100),
+  })
+  .strict();
+export const branchListQuerySchema = z
+  .object({
+    customerId: z.string().regex(/^\d+$/).optional(),
+    region: z.string().trim().min(1).max(120).optional(),
+    search: z.string().trim().min(1).max(200).optional(),
+    page: queryNumber(1, 1, 100000),
+    pageSize: queryNumber(25, 1, 100),
+  })
+  .strict();
+export const technicianListQuerySchema = z
+  .object({
+    active: z.enum(['true', 'false']).optional(),
+    region: z.string().trim().min(1).max(120).optional(),
+    search: z.string().trim().min(1).max(200).optional(),
+    availableDate: dateSchema.optional(),
+    availableTime: timeSchema.optional(),
+    page: queryNumber(1, 1, 100000),
+    pageSize: queryNumber(25, 1, 100),
+  })
+  .strict();
+
+export const complaintSchedulingTransitions: Record<ComplaintStatus, readonly ComplaintStatus[]> = {
+  New: ['Under Review', 'Cancelled'],
+  'Under Review': ['Pending Information', 'Ready for Scheduling', 'Cancelled'],
+  'Pending Information': ['Under Review', 'Cancelled'],
+  'Ready for Scheduling': ['Scheduled', 'Cancelled'],
+  Scheduled: ['Closed', 'Cancelled', 'Ready for Scheduling'],
+  Closed: [],
+  Cancelled: [],
+};
+
+export const appointmentTransitions: Record<AppointmentStatus, readonly AppointmentStatus[]> = {
+  Scheduled: ['In Progress', 'Cancelled'],
+  'In Progress': ['Completed', 'Cancelled'],
+  Completed: [],
+  Cancelled: [],
+};

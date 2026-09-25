@@ -10,6 +10,8 @@ import type {
 export type ComplaintRecord = {
   id: string;
   complaintReference: string;
+  customerId: string | null;
+  branchId: string | null;
   customerType: string;
   customerName: string;
   contactNumber: string;
@@ -46,6 +48,8 @@ export type ComplaintListResult = {
 const complaintColumns = `
   complaints.id,
   complaints.complaint_reference AS "complaintReference",
+  complaints.customer_id AS "customerId",
+  complaints.branch_id AS "branchId",
   complaints.customer_type AS "customerType",
   complaints.customer_name AS "customerName",
   complaints.contact_number AS "contactNumber",

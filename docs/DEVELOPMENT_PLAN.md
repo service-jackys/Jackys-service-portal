@@ -58,7 +58,7 @@
 
 ## Phase 3 — Scheduling and technician operations
 
-**Status: Planned**
+**Status: Complete**
 
 - Add technician and customer/branch repositories and APIs.
 - Add availability-aware appointment creation and assignment.
@@ -69,7 +69,7 @@
 - Add calendar/list filters and deterministic ICS generation in `Asia/Dubai`.
 - Keep email disabled by default.
 
-**Gate:** Complaint-to-appointment creation either commits fully or rolls back fully; assignment and status workflows pass integration tests.
+**Gate:** Passed. Complaint-to-appointment creation, technician assignment, status coupling, draft promotion, deterministic ICS output, and PostgreSQL integration tests are verified. Email remains disabled.
 
 ## Phase 4 — First usable web journeys
 
@@ -156,7 +156,7 @@
 
 1. Start Docker Desktop after the workstation restart.
 2. Run the commands in `docs/RESUME_NOTES.md`.
-3. Capture Docker diagnostics if PostgreSQL still fails.
-4. Confirm `npm run db:migrate` applies `001` and is idempotent.
-5. Run the PostgreSQL integration test against the real container.
-6. Begin Phase 2 complaint contracts, repositories, services, and routes.
+3. Begin Phase 4 web journeys with the public complaint and staff scheduling flows.
+4. Add browser coverage for role-gated navigation, complaint updates, appointment scheduling, and unauthorized access.
+5. Keep local authentication and OpenAPI documentation development-only while the UI is built.
+6. Preserve Apps Script as the production and rollback/read-only system.

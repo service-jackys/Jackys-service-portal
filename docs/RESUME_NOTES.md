@@ -13,7 +13,7 @@
 
 ## Current implementation
 
-The repository currently contains:
+Phase3 scheduling and technician operations are locally implemented and verified. The repository currently contains:
 
 - Express 5 TypeScript API shell.
 - Local-only authentication bootstrap with in-memory users and sessions.
@@ -29,6 +29,9 @@ The repository currently contains:
 - PostgreSQL repositories for profiles/permissions, complaints, counters, history, and audit events.
 - Public complaint submission with strict validation, local rate limiting, transactional `CMP-yymmdd-XXX` references, and audit/history writes.
 - Protected complaint list/detail/notes/status endpoints with database-backed permissions and legal transitions.
+- Protected customer, branch, and technician master-data APIs with audit events and availability management.
+- Transactional appointment creation, assignment, cancellation/completion coupling, status history, and deterministic ICS downloads.
+- Idempotent draft schedules with atomic, retry-safe promotion.
 
 ## Last verified state
 
@@ -36,9 +39,8 @@ Verified with PostgreSQL running in Docker:
 
 - Docker 29.8.0 and Docker Compose v5.5.1 available.
 - PostgreSQL 16 container healthy and accepting connections.
-- First `npm run db:migrate` applied migration `001`.
-- Second `npm run db:migrate` reported `No migrations to apply.`
-- `npm test` passed, including the PostgreSQL integration test.
+- `npm run db:migrate` reported `No migrations to apply.` on both verification runs; migration `002` is already applied.
+- `npm test` passed all 9 tests, including the PostgreSQL scheduling integration test.
 - `npm run typecheck` passed.
 - `npm run build` passed.
 - `npm run format:check` passed.
@@ -94,11 +96,11 @@ Do not delete the database volume or use `docker compose down -v` while diagnosi
 
 ## Next coding capability
 
-Phase2 is complete and verified. The next coding capability is Phase3 scheduling and technician operations:
+Phase3 scheduling and technician operations are complete and verified. The next capability is the Phase4 web journey:
 
-1. Technician and customer/branch repositories and APIs.
-2. Availability-aware appointment creation and assignment.
-3. Transactional complaint-to-appointment linkage.
-4. One-active-appointment enforcement and cancelled rebooking.
-5. Appointment status transitions, history, and audit events.
-6. Calendar/list filters and deterministic ICS generation in `Asia/Dubai`.
+1. Public complaint registration and confirmation.
+2. Staff sign-in and role-gated navigation.
+3. Complaint inbox/detail/update screens.
+4. New-request and appointment scheduling screens.
+5. Technician assignment and appointment list/calendar views.
+6. Browser tests for golden-path and unauthorized access behavior.

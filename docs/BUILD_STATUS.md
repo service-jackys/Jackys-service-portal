@@ -5,11 +5,11 @@
 **Branch:** `main`
 **Latest committed baseline:** `e5db878 Verify Phase1 and document local startup`
 
-Phase2 complaint workflow changes are currently uncommitted and verified locally.
+Phase2 and Phase3 changes are currently uncommitted and verified locally.
 
 ## Overall status
 
-**Foundation, PostgreSQL persistence, and the Phase2 complaint workflow are implemented. Local PostgreSQL verification has passed with Docker Desktop and PostgreSQL 16.**
+**Foundation, PostgreSQL persistence, complaint workflow, and scheduling/technician operations are implemented locally. Local PostgreSQL verification has passed with Docker Desktop and PostgreSQL 16.**
 
 ## Capability status
 
@@ -27,26 +27,28 @@ Phase2 complaint workflow changes are currently uncommitted and verified locally
 | Local PostgreSQL execution       | Complete    | Docker PostgreSQL 16 healthy; migrations and integration tests pass |
 | Supabase Auth                    | Not started | Reserved for staging/production                                     |
 | Complaint API                    | Complete    | Public submission, inbox/detail, notes, status, history, audit      |
-| Appointment API                  | Not started | Schema exists; service/API workflow remains                         |
-| Technician API                   | Not started | Schema exists; repositories/API remain                              |
+| Customer/branch master API       | Complete    | Protected CRUD, filtering, pagination, and audit events             |
+| Technician API                   | Complete    | Protected CRUD, availability replacement, locking, and audit        |
+| Appointment API                  | Complete    | Transactional linkage, assignment, status, history, audit, and ICS  |
+| Draft scheduling                 | Complete    | Idempotent drafts and atomic promotion with retry-safe results      |
 | Production web UI                | Not started | Only minimal web shell exists                                       |
 | Historical import/reconciliation | Not started | Must use authorized exports outside Git                             |
 | Production deployment/cutover    | Not started | Apps Script remains production                                      |
 
 ## Verification matrix
 
-| Check                          | Previous result                          | Current action                               |
-| ------------------------------ | ---------------------------------------- | -------------------------------------------- |
-| `npm run typecheck`            | Passed                                   | Re-run after restart if dependencies changed |
-| `npm run build`                | Passed                                   | Re-run after restart if dependencies changed |
-| `npm run format:check`         | Passed                                   | Re-run after restart if dependencies changed |
-| API/OpenAPI tests              | Passed                                   | Re-run with `npm test`                       |
-| Docker availability            | Passed: Docker 29.8.0 and Compose v5.5.1 | Recheck after a workstation restart          |
-| PostgreSQL container           | Passed: healthy and running              | Run `docker compose ps`                      |
-| Migration first run            | Passed: applied `001`                    | Run `npm run db:migrate`                     |
-| Migration second run           | Passed: no-op                            | Expect `No migrations to apply.`             |
-| PostgreSQL integration test    | Passed                                   | Run `npm test` with PostgreSQL running       |
-| `npm audit --audit-level=high` | Not verified: network-dependent          | Re-run on an approved network                |
+| Check                          | Previous result                          | Current action                              |
+| ------------------------------ | ---------------------------------------- | ------------------------------------------- |
+| `npm run typecheck`            | Passed                                   | Verified after Phase3 changes               |
+| `npm run build`                | Passed                                   | Verified after Phase3 changes               |
+| `npm run format:check`         | Passed                                   | Verified after Phase3 changes               |
+| API/OpenAPI tests              | Passed                                   | All 9 tests pass with `npm test`            |
+| Docker availability            | Passed: Docker 29.8.0 and Compose v5.5.1 | Recheck after a workstation restart         |
+| PostgreSQL container           | Passed: healthy and running              | Run `docker compose ps`                     |
+| Migration first run            | Passed: no pending migrations            | Migration `002` is already applied          |
+| Migration second run           | Passed: no-op                            | Expect `No migrations to apply.`            |
+| PostgreSQL integration test    | Passed                                   | Scheduling scenario runs against PostgreSQL |
+| `npm audit --audit-level=high` | Not verified: network-dependent          | Re-run on an approved network               |
 
 ## Required evidence for Phase 1 completion
 
@@ -61,7 +63,7 @@ Phase2 complaint workflow changes are currently uncommitted and verified locally
 ## Current blockers
 
 1. `npm audit --audit-level=high` still requires npm registry/network access.
-2. Supabase production authentication and the remaining scheduling/UI/cutover phases are not started.
+2. Supabase production authentication, the web UI, historical import, and cutover remain unstarted.
 
 ## Do not do during troubleshooting
 

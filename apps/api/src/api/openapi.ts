@@ -65,6 +65,70 @@ const requestBodies = {
       },
     },
   },
+  customer: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: { $ref: '#/components/schemas/CustomerRequest' },
+      },
+    },
+  },
+  branch: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: { $ref: '#/components/schemas/BranchRequest' },
+      },
+    },
+  },
+  technician: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: { $ref: '#/components/schemas/TechnicianRequest' },
+      },
+    },
+  },
+  availability: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: { $ref: '#/components/schemas/AvailabilityRequest' },
+      },
+    },
+  },
+  appointment: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: { $ref: '#/components/schemas/AppointmentRequest' },
+      },
+    },
+  },
+  appointmentAssignment: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: { $ref: '#/components/schemas/AppointmentAssignmentRequest' },
+      },
+    },
+  },
+  appointmentStatus: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: { $ref: '#/components/schemas/AppointmentStatusRequest' },
+      },
+    },
+  },
+  draftSchedule: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: { $ref: '#/components/schemas/DraftScheduleRequest' },
+      },
+    },
+  },
 };
 
 export function createOpenApiDocument(routes: RouteDefinition[]) {
@@ -74,6 +138,12 @@ export function createOpenApiDocument(routes: RouteDefinition[]) {
     const responses: Record<string, object> = {};
     for (const status of route.responses) {
       responses[String(status)] = responseDefinitions[status];
+    }
+    if (route.responseContentType) {
+      responses['200'] = {
+        description: 'Successful response',
+        content: { [route.responseContentType]: { schema: { type: 'string' } } },
+      };
     }
 
     const operation: Record<string, unknown> = {
@@ -199,6 +269,132 @@ export function createOpenApiDocument(routes: RouteDefinition[]) {
               ],
             },
             reason: { type: 'string', maxLength: 1000 },
+          },
+        },
+        CustomerRequest: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['customerType', 'name', 'contactNumber'],
+          properties: {
+            customerType: { type: 'string', enum: ['individual', 'company', 'b2b'] },
+            name: { type: 'string', minLength: 1, maxLength: 200 },
+            contactNumber: { type: 'string', minLength: 1, maxLength: 50 },
+            email: { type: 'string', format: 'email', maxLength: 320 },
+            address: { type: 'string', minLength: 1, maxLength: 500 },
+            region: { type: 'string', minLength: 1, maxLength: 120 },
+          },
+        },
+        BranchRequest: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['name'],
+          properties: {
+            customerId: { type: 'string', pattern: '^\\d+$' },
+            name: { type: 'string', minLength: 1, maxLength: 200 },
+            contactPerson: { type: 'string', minLength: 1, maxLength: 120 },
+            contactNumber: { type: 'string', minLength: 1, maxLength: 50 },
+            address: { type: 'string', minLength: 1, maxLength: 500 },
+            region: { type: 'string', minLength: 1, maxLength: 120 },
+            customerNumber: { type: 'string', minLength: 1, maxLength: 120 },
+          },
+        },
+        TechnicianRequest: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['name'],
+          properties: {
+            name: { type: 'string', minLength: 1, maxLength: 120 },
+            region: { type: 'string', minLength: 1, maxLength: 120 },
+            phone: { type: 'string', minLength: 1, maxLength: 50 },
+            email: { type: 'string', format: 'email', maxLength: 320 },
+            active: { type: 'boolean' },
+          },
+        },
+        AvailabilityRequest: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['windows'],
+          properties: {
+            windows: {
+              type: 'array',
+              maxItems: 7,
+              items: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['weekday', 'startsAt', 'endsAt'],
+                properties: {
+                  weekday: { type: 'integer', minimum: 0, maximum: 6 },
+                  startsAt: { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' },
+                  endsAt: { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' },
+                },
+              },
+            },
+          },
+        },
+        AppointmentRequest: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['appointmentDate', 'appointmentTime'],
+          properties: {
+            complaintId: { type: 'string', pattern: '^\\d+$' },
+            customerId: { type: 'string', pattern: '^\\d+$' },
+            branchId: { type: 'string', pattern: '^\\d+$' },
+            technicianId: { type: 'string', pattern: '^\\d+$' },
+            customerType: { type: 'string', enum: ['individual', 'company', 'b2b'] },
+            customerName: { type: 'string', minLength: 1, maxLength: 200 },
+            contactNumber: { type: 'string', minLength: 1, maxLength: 50 },
+            customerEmail: { type: 'string', format: 'email', maxLength: 320 },
+            address: { type: 'string', minLength: 1, maxLength: 500 },
+            region: { type: 'string', minLength: 1, maxLength: 120 },
+            brand: { type: 'string', minLength: 1, maxLength: 120 },
+            model: { type: 'string', minLength: 1, maxLength: 120 },
+            itemCode: { type: 'string', minLength: 1, maxLength: 120 },
+            faultDescription: { type: 'string', minLength: 1, maxLength: 10000 },
+            jobWarranty: { type: 'string', minLength: 1, maxLength: 120 },
+            salesOrderNumber: { type: 'string', minLength: 1, maxLength: 120 },
+            appointmentDate: { type: 'string', format: 'date' },
+            appointmentTime: { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' },
+          },
+        },
+        AppointmentAssignmentRequest: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['technicianId'],
+          properties: { technicianId: { type: ['string', 'null'], pattern: '^\\d+$' } },
+        },
+        AppointmentStatusRequest: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['status'],
+          properties: {
+            status: {
+              type: 'string',
+              enum: ['Scheduled', 'In Progress', 'Completed', 'Cancelled'],
+            },
+            reason: { type: 'string', maxLength: 1000 },
+          },
+        },
+        DraftScheduleRequest: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['items'],
+          properties: {
+            items: {
+              type: 'array',
+              minItems: 1,
+              maxItems: 100,
+              items: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['complaintId', 'appointmentDate', 'appointmentTime'],
+                properties: {
+                  complaintId: { type: 'string', pattern: '^\\d+$' },
+                  technicianId: { type: 'string', pattern: '^\\d+$' },
+                  appointmentDate: { type: 'string', format: 'date' },
+                  appointmentTime: { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' },
+                },
+              },
+            },
           },
         },
         Complaint: {

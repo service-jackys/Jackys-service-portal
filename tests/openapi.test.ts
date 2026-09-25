@@ -44,7 +44,10 @@ test(
     await SwaggerParser.validate(document as OpenAPI.Document);
 
     assert.equal(document.openapi, '3.1.0');
-    assert.equal(Object.keys(document.paths).length, routes.length);
+    assert.equal(
+      Object.keys(document.paths).length,
+      new Set(routes.map((route) => route.path)).size,
+    );
     assert.ok(document.components?.schemas?.AuthUser);
     assert.ok(document.components?.securitySchemes?.bearerAuth);
 

@@ -7,21 +7,70 @@ import { createApplicationAuth } from '../auth/application-auth.js';
 import { createComplaintHandlers } from '../complaints/routes.js';
 import { createComplaintService } from '../complaints/service.js';
 import { createLocalComplaintRateLimiter } from '../complaints/rate-limit.js';
+import { createCustomerHandlers } from '../customers/routes.js';
+import { createCustomerService } from '../customers/service.js';
+import { createBranchHandlers } from '../branches/routes.js';
+import { createBranchService } from '../branches/service.js';
+import { createTechnicianHandlers } from '../technicians/routes.js';
+import { createTechnicianService } from '../technicians/service.js';
+import { createAppointmentHandlers } from '../appointments/routes.js';
+import { createAppointmentService } from '../appointments/service.js';
+import { createScheduleHandlers } from '../schedules/routes.js';
+import { createScheduleService } from '../schedules/service.js';
 
 export type RouteDefinition = {
-  method: 'get' | 'post' | 'patch';
+  method: 'get' | 'post' | 'patch' | 'put';
   path: string;
   operationId: string;
   tags: string[];
   summary: string;
   security?: 'bearerAuth' | 'optionalBearerAuth';
-  requestBody?: 'bootstrap' | 'login' | 'publicComplaint' | 'complaintNotes' | 'complaintStatus';
+  requestBody?:
+    | 'bootstrap'
+    | 'login'
+    | 'publicComplaint'
+    | 'complaintNotes'
+    | 'complaintStatus'
+    | 'customer'
+    | 'branch'
+    | 'technician'
+    | 'availability'
+    | 'appointment'
+    | 'appointmentAssignment'
+    | 'appointmentStatus'
+    | 'draftSchedule';
   parameters?: object[];
+  responseContentType?: string;
   responses: number[];
   handlers: RequestHandler[];
 };
 
 const appVersion = '0.1.0';
+
+const paginationParameters: object[] = [
+  { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
+  {
+    name: 'pageSize',
+    in: 'query',
+    schema: { type: 'integer', minimum: 1, maximum: 100, default: 25 },
+  },
+];
+
+const appointmentListParameters: object[] = [
+  ...paginationParameters,
+  { name: 'from', in: 'query', schema: { type: 'string', format: 'date' } },
+  { name: 'to', in: 'query', schema: { type: 'string', format: 'date' } },
+  { name: 'technicianId', in: 'query', schema: { type: 'string', pattern: '^\\d+$' } },
+  { name: 'branchId', in: 'query', schema: { type: 'string', pattern: '^\\d+$' } },
+  { name: 'complaintId', in: 'query', schema: { type: 'string', pattern: '^\\d+$' } },
+  {
+    name: 'status',
+    in: 'query',
+    schema: { type: 'string', enum: ['Scheduled', 'In Progress', 'Completed', 'Cancelled'] },
+  },
+  { name: 'region', in: 'query', schema: { type: 'string', minLength: 1, maxLength: 120 } },
+  { name: 'search', in: 'query', schema: { type: 'string', minLength: 1, maxLength: 200 } },
+];
 
 function providerUnavailable(response: Parameters<RequestHandler>[1]): void {
   problem(
@@ -46,10 +95,16 @@ function localBootstrapUnavailable(response: Parameters<RequestHandler>[1]): voi
 export function createRouteCatalog(localAuth: LocalAuth | null): RouteDefinition[] {
   const databaseUrl = process.env.DATABASE_URL;
   const pool = databaseUrl ? createDbPool(databaseUrl) : null;
+  const requirePermission = pool
+    ? createApplicationAuth(pool, localAuth).requirePermission
+    : (_permission: string) =>
+        (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) => {
+          providerUnavailable(response);
+        };
   const complaintHandlers = pool
     ? createComplaintHandlers(
         createComplaintService(pool),
-        createApplicationAuth(pool, localAuth).requirePermission,
+        requirePermission,
         createLocalComplaintRateLimiter(),
       )
     : {
@@ -77,6 +132,130 @@ export function createRouteCatalog(localAuth: LocalAuth | null): RouteDefinition
           (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) => {
             providerUnavailable(response);
           },
+        ],
+      };
+  const customerHandlers = pool
+    ? createCustomerHandlers(createCustomerService(pool), requirePermission)
+    : {
+        list: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        create: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        detail: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        update: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+      };
+  const branchHandlers = pool
+    ? createBranchHandlers(createBranchService(pool), requirePermission)
+    : {
+        list: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        create: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        detail: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        update: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+      };
+  const technicianHandlers = pool
+    ? createTechnicianHandlers(createTechnicianService(pool), requirePermission)
+    : {
+        list: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        create: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        detail: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        update: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        availability: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+      };
+  const appointmentHandlers = pool
+    ? createAppointmentHandlers(createAppointmentService(pool), requirePermission)
+    : {
+        list: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        create: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        detail: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        history: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        ics: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        assignment: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        status: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+      };
+  const scheduleHandlers = pool
+    ? createScheduleHandlers(createScheduleService(pool), requirePermission)
+    : {
+        list: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        create: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        detail: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        update: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        promote: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        cancel: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
         ],
       };
   const routes: RouteDefinition[] = [
@@ -349,6 +528,324 @@ export function createRouteCatalog(localAuth: LocalAuth | null): RouteDefinition
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: [200, 400, 401, 403, 404, 409, 500],
         handlers: complaintHandlers.status,
+      },
+      {
+        method: 'get' as const,
+        path: '/api/customers',
+        operationId: 'listCustomers',
+        tags: ['Customers'],
+        summary: 'List customers',
+        security: 'bearerAuth' as const,
+        parameters: paginationParameters.concat([
+          { name: 'search', in: 'query', schema: { type: 'string', minLength: 1, maxLength: 200 } },
+        ]),
+        responses: [200, 400, 401, 403, 500],
+        handlers: customerHandlers.list,
+      },
+      {
+        method: 'post' as const,
+        path: '/api/customers',
+        operationId: 'createCustomer',
+        tags: ['Customers'],
+        summary: 'Create a customer',
+        security: 'bearerAuth' as const,
+        requestBody: 'customer' as const,
+        responses: [201, 400, 401, 403, 500],
+        handlers: customerHandlers.create,
+      },
+      {
+        method: 'get' as const,
+        path: '/api/customers/{id}',
+        operationId: 'getCustomer',
+        tags: ['Customers'],
+        summary: 'Get a customer',
+        security: 'bearerAuth' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 401, 403, 404, 500],
+        handlers: customerHandlers.detail,
+      },
+      {
+        method: 'patch' as const,
+        path: '/api/customers/{id}',
+        operationId: 'updateCustomer',
+        tags: ['Customers'],
+        summary: 'Update a customer',
+        security: 'bearerAuth' as const,
+        requestBody: 'customer' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 400, 401, 403, 404, 500],
+        handlers: customerHandlers.update,
+      },
+      {
+        method: 'get' as const,
+        path: '/api/branches',
+        operationId: 'listBranches',
+        tags: ['Branches'],
+        summary: 'List branches',
+        security: 'bearerAuth' as const,
+        parameters: paginationParameters.concat([
+          { name: 'customerId', in: 'query', schema: { type: 'string', pattern: '^\\d+$' } },
+          { name: 'region', in: 'query', schema: { type: 'string', minLength: 1, maxLength: 120 } },
+          { name: 'search', in: 'query', schema: { type: 'string', minLength: 1, maxLength: 200 } },
+        ]),
+        responses: [200, 400, 401, 403, 500],
+        handlers: branchHandlers.list,
+      },
+      {
+        method: 'post' as const,
+        path: '/api/branches',
+        operationId: 'createBranch',
+        tags: ['Branches'],
+        summary: 'Create a branch',
+        security: 'bearerAuth' as const,
+        requestBody: 'branch' as const,
+        responses: [201, 400, 401, 403, 500],
+        handlers: branchHandlers.create,
+      },
+      {
+        method: 'get' as const,
+        path: '/api/branches/{id}',
+        operationId: 'getBranch',
+        tags: ['Branches'],
+        summary: 'Get a branch',
+        security: 'bearerAuth' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 401, 403, 404, 500],
+        handlers: branchHandlers.detail,
+      },
+      {
+        method: 'patch' as const,
+        path: '/api/branches/{id}',
+        operationId: 'updateBranch',
+        tags: ['Branches'],
+        summary: 'Update a branch',
+        security: 'bearerAuth' as const,
+        requestBody: 'branch' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 400, 401, 403, 404, 500],
+        handlers: branchHandlers.update,
+      },
+      {
+        method: 'get' as const,
+        path: '/api/technicians',
+        operationId: 'listTechnicians',
+        tags: ['Technicians'],
+        summary: 'List technicians',
+        security: 'bearerAuth' as const,
+        parameters: paginationParameters.concat([
+          { name: 'active', in: 'query', schema: { type: 'boolean' } },
+          { name: 'region', in: 'query', schema: { type: 'string', minLength: 1, maxLength: 120 } },
+          { name: 'search', in: 'query', schema: { type: 'string', minLength: 1, maxLength: 200 } },
+          { name: 'availableDate', in: 'query', schema: { type: 'string', format: 'date' } },
+          {
+            name: 'availableTime',
+            in: 'query',
+            schema: { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' },
+          },
+        ]),
+        responses: [200, 400, 401, 403, 500],
+        handlers: technicianHandlers.list,
+      },
+      {
+        method: 'post' as const,
+        path: '/api/technicians',
+        operationId: 'createTechnician',
+        tags: ['Technicians'],
+        summary: 'Create a technician',
+        security: 'bearerAuth' as const,
+        requestBody: 'technician' as const,
+        responses: [201, 400, 401, 403, 500],
+        handlers: technicianHandlers.create,
+      },
+      {
+        method: 'get' as const,
+        path: '/api/technicians/{id}',
+        operationId: 'getTechnician',
+        tags: ['Technicians'],
+        summary: 'Get a technician',
+        security: 'bearerAuth' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 401, 403, 404, 500],
+        handlers: technicianHandlers.detail,
+      },
+      {
+        method: 'patch' as const,
+        path: '/api/technicians/{id}',
+        operationId: 'updateTechnician',
+        tags: ['Technicians'],
+        summary: 'Update a technician',
+        security: 'bearerAuth' as const,
+        requestBody: 'technician' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 400, 401, 403, 404, 500],
+        handlers: technicianHandlers.update,
+      },
+      {
+        method: 'put' as const,
+        path: '/api/technicians/{id}/availability',
+        operationId: 'replaceTechnicianAvailability',
+        tags: ['Technicians'],
+        summary: 'Replace technician availability',
+        security: 'bearerAuth' as const,
+        requestBody: 'availability' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 400, 401, 403, 404, 500],
+        handlers: technicianHandlers.availability,
+      },
+      {
+        method: 'get' as const,
+        path: '/api/appointments',
+        operationId: 'listAppointments',
+        tags: ['Appointments'],
+        summary: 'List appointments',
+        security: 'bearerAuth' as const,
+        parameters: appointmentListParameters,
+        responses: [200, 400, 401, 403, 500],
+        handlers: appointmentHandlers.list,
+      },
+      {
+        method: 'post' as const,
+        path: '/api/appointments',
+        operationId: 'createAppointment',
+        tags: ['Appointments'],
+        summary: 'Create an appointment',
+        security: 'bearerAuth' as const,
+        requestBody: 'appointment' as const,
+        responses: [201, 400, 401, 403, 409, 500],
+        handlers: appointmentHandlers.create,
+      },
+      {
+        method: 'get' as const,
+        path: '/api/appointments/{id}',
+        operationId: 'getAppointment',
+        tags: ['Appointments'],
+        summary: 'Get an appointment',
+        security: 'bearerAuth' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 401, 403, 404, 500],
+        handlers: appointmentHandlers.detail,
+      },
+      {
+        method: 'get' as const,
+        path: '/api/appointments/{id}/history',
+        operationId: 'getAppointmentHistory',
+        tags: ['Appointments'],
+        summary: 'Get appointment status history',
+        security: 'bearerAuth' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 401, 403, 404, 500],
+        handlers: appointmentHandlers.history,
+      },
+      {
+        method: 'get' as const,
+        path: '/api/appointments/{id}/ics',
+        operationId: 'getAppointmentIcs',
+        tags: ['Appointments'],
+        summary: 'Download an appointment calendar event',
+        security: 'bearerAuth' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responseContentType: 'text/calendar',
+        responses: [200, 401, 403, 404, 500],
+        handlers: appointmentHandlers.ics,
+      },
+      {
+        method: 'patch' as const,
+        path: '/api/appointments/{id}/assignment',
+        operationId: 'assignAppointment',
+        tags: ['Appointments'],
+        summary: 'Assign or unassign an appointment technician',
+        security: 'bearerAuth' as const,
+        requestBody: 'appointmentAssignment' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 400, 401, 403, 404, 409, 500],
+        handlers: appointmentHandlers.assignment,
+      },
+      {
+        method: 'patch' as const,
+        path: '/api/appointments/{id}/status',
+        operationId: 'updateAppointmentStatus',
+        tags: ['Appointments'],
+        summary: 'Change appointment status',
+        security: 'bearerAuth' as const,
+        requestBody: 'appointmentStatus' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 400, 401, 403, 404, 409, 500],
+        handlers: appointmentHandlers.status,
+      },
+      {
+        method: 'get' as const,
+        path: '/api/schedules/drafts',
+        operationId: 'listDraftSchedules',
+        tags: ['Schedules'],
+        summary: 'List draft schedules',
+        security: 'bearerAuth' as const,
+        parameters: paginationParameters,
+        responses: [200, 400, 401, 403, 500],
+        handlers: scheduleHandlers.list,
+      },
+      {
+        method: 'post' as const,
+        path: '/api/schedules/drafts',
+        operationId: 'createDraftSchedule',
+        tags: ['Schedules'],
+        summary: 'Create a draft schedule',
+        security: 'bearerAuth' as const,
+        requestBody: 'draftSchedule' as const,
+        parameters: [
+          {
+            name: 'Idempotency-Key',
+            in: 'header',
+            required: true,
+            schema: { type: 'string', minLength: 1, maxLength: 200 },
+          },
+        ],
+        responses: [201, 400, 401, 403, 500],
+        handlers: scheduleHandlers.create,
+      },
+      {
+        method: 'get' as const,
+        path: '/api/schedules/drafts/{id}',
+        operationId: 'getDraftSchedule',
+        tags: ['Schedules'],
+        summary: 'Get a draft schedule',
+        security: 'bearerAuth' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 401, 403, 404, 500],
+        handlers: scheduleHandlers.detail,
+      },
+      {
+        method: 'patch' as const,
+        path: '/api/schedules/drafts/{id}',
+        operationId: 'updateDraftSchedule',
+        tags: ['Schedules'],
+        summary: 'Update a draft schedule',
+        security: 'bearerAuth' as const,
+        requestBody: 'draftSchedule' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 400, 401, 403, 404, 409, 500],
+        handlers: scheduleHandlers.update,
+      },
+      {
+        method: 'post' as const,
+        path: '/api/schedules/drafts/{id}/promote',
+        operationId: 'promoteDraftSchedule',
+        tags: ['Schedules'],
+        summary: 'Promote a draft schedule',
+        security: 'bearerAuth' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 401, 403, 404, 409, 500],
+        handlers: scheduleHandlers.promote,
+      },
+      {
+        method: 'post' as const,
+        path: '/api/schedules/drafts/{id}/cancel',
+        operationId: 'cancelDraftSchedule',
+        tags: ['Schedules'],
+        summary: 'Cancel a draft schedule',
+        security: 'bearerAuth' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 401, 403, 404, 409, 500],
+        handlers: scheduleHandlers.cancel,
       },
     ],
   ];
