@@ -3,13 +3,13 @@
 **Updated:** 2026-09-25
 **Repository:** `https://github.com/service-jackys/Jackys-service-portal`
 **Branch:** `main`
-**Latest committed baseline:** `600d727 Document Windows local setup`
+**Latest committed baseline:** `e5db878 Verify Phase1 and document local startup`
 
-A follow-up local commit is being prepared for PostgreSQL verification, test fixes, and beginner-friendly startup documentation.
+Phase2 complaint workflow changes are currently uncommitted and verified locally.
 
 ## Overall status
 
-**Foundation and PostgreSQL persistence are implemented. Local PostgreSQL verification has passed with Docker Desktop and PostgreSQL 16.**
+**Foundation, PostgreSQL persistence, and the Phase2 complaint workflow are implemented. Local PostgreSQL verification has passed with Docker Desktop and PostgreSQL 16.**
 
 ## Capability status
 
@@ -26,7 +26,7 @@ A follow-up local commit is being prepared for PostgreSQL verification, test fix
 | Docker Compose configuration     | Present     | PostgreSQL 16 service on port 5432                                  |
 | Local PostgreSQL execution       | Complete    | Docker PostgreSQL 16 healthy; migrations and integration tests pass |
 | Supabase Auth                    | Not started | Reserved for staging/production                                     |
-| Complaint API                    | Not started | Next capability after database verification                         |
+| Complaint API                    | Complete    | Public submission, inbox/detail, notes, status, history, audit      |
 | Appointment API                  | Not started | Schema exists; service/API workflow remains                         |
 | Technician API                   | Not started | Schema exists; repositories/API remain                              |
 | Production web UI                | Not started | Only minimal web shell exists                                       |
@@ -61,7 +61,7 @@ A follow-up local commit is being prepared for PostgreSQL verification, test fix
 ## Current blockers
 
 1. `npm audit --audit-level=high` still requires npm registry/network access.
-2. Phase 2 complaint capability is not started yet.
+2. Supabase production authentication and the remaining scheduling/UI/cutover phases are not started.
 
 ## Do not do during troubleshooting
 

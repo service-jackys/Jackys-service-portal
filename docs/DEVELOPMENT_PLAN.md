@@ -42,7 +42,7 @@
 
 ## Phase 2 — Authentication, authorization, and complaint workflow
 
-**Status: Next development phase**
+**Status: Complete**
 
 - Add shared contracts and response types.
 - Add Supabase access-token verification boundary without coupling repositories to Supabase internals.

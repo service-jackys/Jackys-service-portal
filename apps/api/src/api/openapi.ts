@@ -16,7 +16,10 @@ const responseDefinitions: Record<number, object> = {
   400: problemResponse,
   401: problemResponse,
   403: problemResponse,
+  404: problemResponse,
   409: problemResponse,
+  422: problemResponse,
+  429: { ...problemResponse, headers: { 'Retry-After': { schema: { type: 'integer' } } } },
   500: problemResponse,
   501: problemResponse,
 };
@@ -35,6 +38,30 @@ const requestBodies = {
     content: {
       'application/json': {
         schema: { $ref: '#/components/schemas/LoginRequest' },
+      },
+    },
+  },
+  publicComplaint: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: { $ref: '#/components/schemas/PublicComplaintRequest' },
+      },
+    },
+  },
+  complaintNotes: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: { $ref: '#/components/schemas/ComplaintNotesRequest' },
+      },
+    },
+  },
+  complaintStatus: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: { $ref: '#/components/schemas/ComplaintStatusRequest' },
       },
     },
   },
@@ -58,6 +85,7 @@ export function createOpenApiDocument(routes: RouteDefinition[]) {
     if (route.security === 'bearerAuth') operation.security = [{ bearerAuth: [] }];
     if (route.security === 'optionalBearerAuth') operation.security = [{}, { bearerAuth: [] }];
     if (route.requestBody) operation.requestBody = requestBodies[route.requestBody];
+    if (route.parameters) operation.parameters = route.parameters;
 
     paths[route.path] ??= {};
     paths[route.path][route.method] = operation;
@@ -128,6 +156,93 @@ export function createOpenApiDocument(routes: RouteDefinition[]) {
           properties: {
             email: { type: 'string', format: 'email', maxLength: 320 },
             password: { type: 'string', minLength: 1, maxLength: 200 },
+          },
+        },
+        PublicComplaintRequest: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['customerType', 'customerName', 'contactNumber', 'description'],
+          properties: {
+            customerType: { type: 'string', enum: ['individual', 'company', 'b2b'] },
+            customerName: { type: 'string', minLength: 1, maxLength: 200 },
+            contactNumber: { type: 'string', minLength: 1, maxLength: 50 },
+            customerEmail: { type: 'string', format: 'email', maxLength: 320 },
+            address: { type: 'string', minLength: 1, maxLength: 500 },
+            region: { type: 'string', minLength: 1, maxLength: 120 },
+            brand: { type: 'string', minLength: 1, maxLength: 120 },
+            model: { type: 'string', minLength: 1, maxLength: 120 },
+            serialOrItemCode: { type: 'string', minLength: 1, maxLength: 120 },
+            description: { type: 'string', minLength: 1, maxLength: 10000 },
+          },
+        },
+        ComplaintNotesRequest: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['notes'],
+          properties: { notes: { type: 'string', minLength: 1, maxLength: 10000 } },
+        },
+        ComplaintStatusRequest: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['status'],
+          properties: {
+            status: {
+              type: 'string',
+              enum: [
+                'New',
+                'Under Review',
+                'Pending Information',
+                'Ready for Scheduling',
+                'Scheduled',
+                'Closed',
+                'Cancelled',
+              ],
+            },
+            reason: { type: 'string', maxLength: 1000 },
+          },
+        },
+        Complaint: {
+          type: 'object',
+          required: [
+            'id',
+            'complaintReference',
+            'customerType',
+            'customerName',
+            'contactNumber',
+            'description',
+            'status',
+          ],
+          properties: {
+            id: { type: 'string' },
+            complaintReference: { type: 'string', pattern: '^CMP-[0-9]{6}-[0-9]{3}$' },
+            customerType: { type: 'string' },
+            customerName: { type: 'string' },
+            contactNumber: { type: 'string' },
+            customerEmail: { type: ['string', 'null'], format: 'email' },
+            address: { type: ['string', 'null'] },
+            region: { type: ['string', 'null'] },
+            brand: { type: ['string', 'null'] },
+            model: { type: ['string', 'null'] },
+            serialOrItemCode: { type: ['string', 'null'] },
+            description: { type: 'string' },
+            salesOrderNumber: { type: ['string', 'null'] },
+            warrantyClassification: { type: ['string', 'null'] },
+            status: {
+              type: 'string',
+              enum: [
+                'New',
+                'Under Review',
+                'Pending Information',
+                'Ready for Scheduling',
+                'Scheduled',
+                'Closed',
+                'Cancelled',
+              ],
+            },
+            cceNotes: { type: ['string', 'null'] },
+            submittedAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+            updatedBy: { type: ['string', 'null'] },
           },
         },
         ServiceMetadata: {

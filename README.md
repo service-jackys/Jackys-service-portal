@@ -8,10 +8,10 @@ The live Google Apps Script application remains the production system. This loca
 
 - Phase 0 foundation: complete and committed.
 - Phase 1 PostgreSQL persistence: implemented and verified locally.
-- Phase 2 complaint workflow: next development phase.
+- Phase 2 complaint workflow: implemented and verified locally.
 - Production cutover: not started.
 
-The local system currently provides an Express TypeScript API, PostgreSQL migrations, local-only authentication for development, OpenAPI/Swagger documentation, and the initial service-operations database schema.
+The local system currently provides an Express TypeScript API, PostgreSQL migrations, local-only authentication for development, OpenAPI/Swagger documentation, the initial service-operations database schema, and the Phase2 complaint workflow.
 
 ## Before you start
 
@@ -227,7 +227,7 @@ Set a local token in `.env`, start the backend, and send one `POST` request to `
 }
 ```
 
-The response contains a bearer token for local API checks. Do not use this local authentication provider in production. Production authentication is reserved for Supabase Auth and has not been wired yet.
+The response contains a bearer token for local API checks. When `DATABASE_URL` is configured and migrations have run, bootstrap also creates the matching local PostgreSQL administrator profile and role assignment. Do not use this local authentication provider in production. Production authentication is reserved for Supabase Auth and has not been wired yet.
 
 ## Run the verification checks
 
@@ -334,4 +334,4 @@ docker compose down -v
 - `docs/DEVELOPMENT_PLAN.md` — planned phases through cutover and rollback.
 - `docs/architecture/target-architecture.md` — architecture and safety baseline.
 
-The next development capability after Phase1 is the Phase2 complaint workflow: contracts, authorization, public submission, reference generation, status transitions, audit history, and integration tests.
+The Phase2 complaint workflow is implemented and verified. It includes contracts, authorization boundaries, public submission, rate limiting, transactional reference generation, protected inbox/detail/notes/status endpoints, audit/history writes, and PostgreSQL integration coverage. The next capability is Phase3 scheduling and technician operations.

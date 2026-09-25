@@ -1,15 +1,22 @@
 import type { Express, RequestHandler } from 'express';
+import { createDbPool } from '../../../../packages/db/src/client.js';
+import { ensureLocalAdminProfile } from '../../../../packages/db/src/profiles.js';
 import { problem } from './problem.js';
 import type { AuthUser, LocalAuth } from '../auth/local-auth.js';
+import { createApplicationAuth } from '../auth/application-auth.js';
+import { createComplaintHandlers } from '../complaints/routes.js';
+import { createComplaintService } from '../complaints/service.js';
+import { createLocalComplaintRateLimiter } from '../complaints/rate-limit.js';
 
 export type RouteDefinition = {
-  method: 'get' | 'post';
+  method: 'get' | 'post' | 'patch';
   path: string;
   operationId: string;
   tags: string[];
   summary: string;
   security?: 'bearerAuth' | 'optionalBearerAuth';
-  requestBody?: 'bootstrap' | 'login';
+  requestBody?: 'bootstrap' | 'login' | 'publicComplaint' | 'complaintNotes' | 'complaintStatus';
+  parameters?: object[];
   responses: number[];
   handlers: RequestHandler[];
 };
@@ -37,6 +44,41 @@ function localBootstrapUnavailable(response: Parameters<RequestHandler>[1]): voi
 }
 
 export function createRouteCatalog(localAuth: LocalAuth | null): RouteDefinition[] {
+  const databaseUrl = process.env.DATABASE_URL;
+  const pool = databaseUrl ? createDbPool(databaseUrl) : null;
+  const complaintHandlers = pool
+    ? createComplaintHandlers(
+        createComplaintService(pool),
+        createApplicationAuth(pool, localAuth).requirePermission,
+        createLocalComplaintRateLimiter(),
+      )
+    : {
+        submit: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) => {
+            providerUnavailable(response);
+          },
+        ],
+        list: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) => {
+            providerUnavailable(response);
+          },
+        ],
+        detail: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) => {
+            providerUnavailable(response);
+          },
+        ],
+        notes: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) => {
+            providerUnavailable(response);
+          },
+        ],
+        status: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) => {
+            providerUnavailable(response);
+          },
+        ],
+      };
   const routes: RouteDefinition[] = [
     {
       method: 'get',
@@ -147,6 +189,9 @@ export function createRouteCatalog(localAuth: LocalAuth | null): RouteDefinition
               );
               return;
             }
+            if (pool) {
+              await ensureLocalAdminProfile(pool, result.user.email, result.user.name);
+            }
             response.status(201).json({ token: result.token, user: result.user });
           } catch (error) {
             next(error);
@@ -249,6 +294,63 @@ export function createRouteCatalog(localAuth: LocalAuth | null): RouteDefinition
         },
       ],
     },
+    ...[
+      {
+        method: 'post' as const,
+        path: '/api/public/complaints',
+        operationId: 'submitPublicComplaint',
+        tags: ['Complaints'],
+        summary: 'Submit a public complaint',
+        requestBody: 'publicComplaint' as const,
+        responses: [201, 400, 429, 500],
+        handlers: complaintHandlers.submit,
+      },
+      {
+        method: 'get' as const,
+        path: '/api/complaints',
+        operationId: 'listComplaints',
+        tags: ['Complaints'],
+        summary: 'List complaints',
+        security: 'bearerAuth' as const,
+        responses: [200, 400, 401, 403, 500],
+        handlers: complaintHandlers.list,
+      },
+      {
+        method: 'get' as const,
+        path: '/api/complaints/{id}',
+        operationId: 'getComplaint',
+        tags: ['Complaints'],
+        summary: 'Get a complaint',
+        security: 'bearerAuth' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 401, 403, 404, 500],
+        handlers: complaintHandlers.detail,
+      },
+      {
+        method: 'post' as const,
+        path: '/api/complaints/{id}/notes',
+        operationId: 'addComplaintNotes',
+        tags: ['Complaints'],
+        summary: 'Update complaint CCE notes',
+        security: 'bearerAuth' as const,
+        requestBody: 'complaintNotes' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 400, 401, 403, 404, 500],
+        handlers: complaintHandlers.notes,
+      },
+      {
+        method: 'patch' as const,
+        path: '/api/complaints/{id}/status',
+        operationId: 'updateComplaintStatus',
+        tags: ['Complaints'],
+        summary: 'Change complaint status',
+        security: 'bearerAuth' as const,
+        requestBody: 'complaintStatus' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 400, 401, 403, 404, 409, 500],
+        handlers: complaintHandlers.status,
+      },
+    ],
   ];
 
   return routes;
@@ -256,6 +358,7 @@ export function createRouteCatalog(localAuth: LocalAuth | null): RouteDefinition
 
 export function registerRoutes(app: Express, routes: RouteDefinition[]): void {
   for (const route of routes) {
-    app[route.method](route.path, ...route.handlers);
+    const expressPath = route.path.replaceAll(/\{([^}]+)\}/g, ':$1');
+    app[route.method](expressPath, ...route.handlers);
   }
 }

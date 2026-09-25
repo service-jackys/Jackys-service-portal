@@ -6,7 +6,8 @@
 **Branch:** `main`
 **Latest commits:**
 
-- Local changes prepared after `600d727` — verify, document, and commit Phase1 completion
+- Phase2 complaint workflow changes are locally verified and uncommitted.
+- `e5db878` — Verify Phase1 and document local startup
 - `600d727` — Document Windows local setup
 - `b8624f3` — Establish service portal foundation and database migrations
 
@@ -24,6 +25,10 @@ The repository currently contains:
 - Docker Compose PostgreSQL 16 configuration.
 - CI workflow with a PostgreSQL service.
 - Windows CMD setup instructions in `README.md`.
+- Phase2 shared complaint contracts and provider-neutral auth boundary.
+- PostgreSQL repositories for profiles/permissions, complaints, counters, history, and audit events.
+- Public complaint submission with strict validation, local rate limiting, transactional `CMP-yymmdd-XXX` references, and audit/history writes.
+- Protected complaint list/detail/notes/status endpoints with database-backed permissions and legal transitions.
 
 ## Last verified state
 
@@ -89,11 +94,11 @@ Do not delete the database volume or use `docker compose down -v` while diagnosi
 
 ## Next coding capability
 
-After PostgreSQL migration passes, build the Phase 2 complaint capability:
+Phase2 is complete and verified. The next coding capability is Phase3 scheduling and technician operations:
 
-1. Shared contracts and repository boundaries.
-2. Public complaint submission with server-side validation and rate limiting.
-3. Transactional `CMP-yymmdd-XXX` reference generation.
-4. Protected complaint inbox, detail, notes, and status transitions.
-5. Audit/history writes and integration tests.
-6. Complaint-to-appointment transaction and rollback behavior.
+1. Technician and customer/branch repositories and APIs.
+2. Availability-aware appointment creation and assignment.
+3. Transactional complaint-to-appointment linkage.
+4. One-active-appointment enforcement and cancelled rebooking.
+5. Appointment status transitions, history, and audit events.
+6. Calendar/list filters and deterministic ICS generation in `Asia/Dubai`.
