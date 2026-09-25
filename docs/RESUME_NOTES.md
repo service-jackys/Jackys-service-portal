@@ -6,7 +6,7 @@
 **Branch:** `main`
 **Latest commits:**
 
-- Phase2 complaint workflow changes are locally verified and uncommitted.
+- `1fded53` — Implement Phase3 scheduling operations; locally committed and verified, not pushed yet.
 - `e5db878` — Verify Phase1 and document local startup
 - `600d727` — Document Windows local setup
 - `b8624f3` — Establish service portal foundation and database migrations
