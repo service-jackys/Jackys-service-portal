@@ -6,7 +6,8 @@
 **Branch:** `main`
 **Latest commits:**
 
-- `1fded53` — Implement Phase3 scheduling operations; locally committed and verified, not pushed yet.
+- `89bc4aa` — Record Phase3 commit state; pushed successfully to `origin/main`.
+- `1fded53` — Implement Phase3 scheduling operations; pushed successfully to `origin/main`.
 - `e5db878` — Verify Phase1 and document local startup
 - `600d727` — Document Windows local setup
 - `b8624f3` — Establish service portal foundation and database migrations
@@ -68,10 +69,10 @@ npm run format:check
 npm run build
 ```
 
-Expected migration output:
+Expected migration output for the current database:
 
 ```text
-Applied migrations: 001
+No migrations to apply.
 No migrations to apply.
 ```
 
@@ -94,9 +95,11 @@ Do not delete the database volume or use `docker compose down -v` while diagnosi
 - The local auth provider must not be used in production.
 - Keep Apps Script available as the rollback/read-only system until acceptance and reconciliation gates pass.
 
-## Next coding capability
+## Project paused state
 
-Phase3 scheduling and technician operations are complete and verified. The next capability is the Phase4 web journey:
+Phase3 scheduling and technician operations are complete, verified, and pushed to `origin/main`. Work is paused here while a separate project is handled in another folder.
+
+When this project is resumed, the next backlog capability is Phase4 web journeys:
 
 1. Public complaint registration and confirmation.
 2. Staff sign-in and role-gated navigation.
