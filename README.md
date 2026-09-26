@@ -89,11 +89,9 @@ copy .env.example .env
 notepad .env
 ```
 
-In Notepad, change this value to a random local-only token:
+For the current local testing cycle, set `LOCAL_BOOTSTRAP_TOKEN` to the local-only value agreed for your machine. Copy it from your private local setup notes or enter it directly in `.env`; do not write the token into tracked files.
 
-```text
-LOCAL_BOOTSTRAP_TOKEN=replace-with-a-random-32-character-local-only-token
-```
+The bootstrap token is only for the local development environment. It must never be used as a production credential and must never be committed to GitHub. The `.env` file is ignored by Git.
 
 Keep these local development values:
 
@@ -216,18 +214,31 @@ Restart `npm run dev` after changing `.env`. Documentation must not be exposed o
 
 Authentication is currently for local development only. It uses in-memory users and sessions, so users and sessions disappear when the backend restarts.
 
-Set a local token in `.env`, start the backend, and send one `POST` request to `/api/auth/bootstrap` with a body like this:
+For the current local testing cycle, use this local administrator profile:
+
+```text
+Email: vysakh.raju@jackys.com
+Name: Vysakh
+```
+
+Keep the bootstrap token and administrator password private. The bootstrap token belongs in your ignored `.env` file as `LOCAL_BOOTSTRAP_TOKEN`; the password should only be entered locally. Neither secret belongs in this README, source code, screenshots, or GitHub.
+
+Start the backend, open `http://localhost:3000/portal/`, select **Staff workspace → First-time setup**, and enter the exact token from `.env`, the profile above, and a password of at least 12 characters. The web UI is the recommended setup method because it keeps the returned bearer token in memory for the protected workspace.
+
+For a direct API check, send one `POST` request to `/api/auth/bootstrap` with this structure:
 
 ```json
 {
-  "bootstrapToken": "the-value-from-.env",
-  "email": "developer@example.test",
-  "name": "Local Developer",
-  "password": "use-a-local-password-at-least-12-characters"
+  "bootstrapToken": "copy-the-exact-value-from-.env",
+  "email": "vysakh.raju@jackys.com",
+  "name": "Vysakh",
+  "password": "your-private-local-password-at-least-12-characters"
 }
 ```
 
-The response contains a bearer token for local API checks. When `DATABASE_URL` is configured and migrations have run, bootstrap also creates the matching local PostgreSQL administrator profile and role assignment. Do not use this local authentication provider in production. Production authentication is reserved for Supabase Auth and has not been wired yet.
+The `bootstrapToken` must be at least 32 characters and must exactly match `.env`. The password must be at least 12 characters. A successful response is HTTP `201 Created` and contains a temporary bearer token for local API checks. When `DATABASE_URL` is configured and migrations have run, bootstrap also creates the matching local PostgreSQL administrator profile and role assignment.
+
+Do not use this local authentication provider in production. Production authentication is reserved for Supabase Auth and has not been wired yet. See `testing_guide.md`, Section 9, for the full setup, sign-in, Swagger, and troubleshooting flow.
 
 ## Run the verification checks
 

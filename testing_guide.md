@@ -121,16 +121,111 @@ The form sends data to `POST /api/public/complaints`.
 
 ## 9. Test local staff setup
 
-The local system has a development-only first-time setup flow. It is not the production authentication system.
+The local system has a development-only first-time setup flow. It is not the production authentication system and it does not create a Google Apps Script or production account.
 
-1. On the portal page, find **Staff workspace**.
-2. Open the **First-time setup** tab.
-3. Supply the bootstrap token configured for your local environment. Do not place the token in source code or commit it.
-4. Enter a local administrator email and password.
-5. Submit the setup form.
-6. Record the local credentials somewhere safe for this local test only.
+The current local test profile is:
 
-If the local environment has already been bootstrapped, use the sign-in tab instead. Do not repeatedly reset or replace local credentials unless you understand the effect on the local database.
+```text
+Email: vysakh.raju@jackys.com
+Name: Vysakh
+```
+
+The bootstrap token is the value currently stored in your ignored local `.env` file as `LOCAL_BOOTSTRAP_TOKEN`. The local administrator password is the password you selected for this test account. Do not add either secret to this guide, source code, screenshots, or a Git commit.
+
+### 9.1 Confirm the local environment
+
+Stop the backend if it is running, then open the local environment file:
+
+```cmd
+cd /d "C:\Users\Vysakh Raju\Desktop\Jacky's\jackys service portal"
+notepad .env
+```
+
+Confirm that these values are present:
+
+```env
+NODE_ENV=development
+AUTH_PROVIDER=local
+LOCAL_BOOTSTRAP_TOKEN=<your-local-token-of-at-least-32-characters>
+DATABASE_URL=postgresql://jackys:jackys@localhost:5432/jackys_service_portal
+```
+
+The token must be at least 32 characters. It must not be the short value `jsc`. Save the file and restart the backend after changing it because the server reads `.env` only at startup.
+
+### 9.2 Start the backend
+
+From the project folder, run:
+
+```cmd
+npm run dev
+```
+
+Keep this terminal open. The API must be running before using Swagger or the portal.
+
+### 9.3 Create the administrator in the web UI
+
+This is the recommended method because the web UI automatically keeps the returned session token in memory.
+
+1. Open `http://localhost:3000/portal/`.
+2. Scroll to **Staff workspace**.
+3. Select **First-time setup**.
+4. Enter the exact token currently stored in `.env` after `LOCAL_BOOTSTRAP_TOKEN=`.
+5. Enter:
+   - Name: `Vysakh`
+   - Email: `vysakh.raju@jackys.com`
+   - A local password with at least 12 characters.
+6. Select **Create administrator**.
+7. Wait for the protected workspace to appear.
+8. Confirm that the complaint inbox loads.
+
+The local backend creates this account with the `admin` role and all local permissions. The account is held in the running development process and is not a production account.
+
+### 9.4 Create the administrator with Swagger instead
+
+Swagger is useful for checking the API directly. Open:
+
+```text
+http://localhost:3000/api/docs
+```
+
+Find `POST /api/auth/bootstrap`, select **Try it out**, and send this structure. Replace the two angle-bracket values locally; do not commit the completed request body:
+
+```json
+{
+  "bootstrapToken": "<copy-the-exact-value-from-.env>",
+  "email": "vysakh.raju@jackys.com",
+  "name": "Vysakh",
+  "password": "<your-local-password-of-at-least-12-characters>"
+}
+```
+
+A successful response is HTTP `201 Created` and contains a generated `token` and the new user. The returned token is a temporary bearer token for API calls; it is not the bootstrap token.
+
+If Swagger displays `400 Invalid request`, check that the bootstrap token has at least 32 characters, the password has at least 12 characters, the email is valid, and the property names match exactly.
+
+If Swagger displays `401 The bootstrap token is invalid`, the token sent in Swagger does not exactly match the value loaded from `.env`, or the backend was not restarted after `.env` was edited.
+
+If Swagger displays `409 Bootstrap unavailable`, the one-time bootstrap has already been used in the current backend process. Stop the backend with `Ctrl+C`, start `npm run dev` again, and submit the request once more.
+
+### 9.5 Sign in after setup
+
+After the administrator is created, use the **Staff sign in** tab or refresh the portal and sign in with:
+
+```text
+Email: vysakh.raju@jackys.com
+Password: the local password used during setup
+```
+
+Then confirm:
+
+1. The protected workspace becomes visible.
+2. The complaint inbox loads.
+3. Selecting a complaint shows its details and history.
+4. **Sign out** hides the protected workspace.
+
+The browser stores the bearer token in memory only. Refreshing or closing the browser clears the session, so sign in again when necessary.
+
+If the account cannot be recreated after a successful bootstrap, do not repeatedly submit the setup form. Restart the local backend first. This local authentication implementation keeps users and sessions in memory while the backend process is running.
 
 ## 10. Test staff sign-in and protected complaints
 
