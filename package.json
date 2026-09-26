@@ -10,6 +10,7 @@
     "start": "node dist/apps/api/src/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx --test tests/**/*.test.ts",
+    "test:e2e": "playwright test",
     "db:migrate": "tsx packages/db/src/migrate.ts",
     "format:check": "prettier --check ."
   },
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@apidevtools/swagger-parser": "^13.1.0",
+    "@playwright/test": "^1.63.0",
     "@types/express": "^5.0.3",
     "@types/node": "^22.15.21",
     "@types/pg": "^8.23.1",

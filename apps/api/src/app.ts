@@ -1,3 +1,4 @@
+import path from 'node:path';
 import express from 'express';
 import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
@@ -13,6 +14,10 @@ function isProduction(): boolean {
 
 function docsEnabled(): boolean {
   return !isProduction() && process.env.OPENAPI_DOCS_ENABLED === 'true';
+}
+
+function webRoot(): string {
+  return path.resolve(process.cwd(), 'apps/web/src');
 }
 
 export function createApp() {
@@ -57,6 +62,11 @@ export function createApp() {
   }
 
   registerRoutes(app, routes);
+
+  app.use('/portal', express.static(webRoot(), { index: 'index.html' }));
+  app.get('/portal/*splat', (_request, response) => {
+    response.sendFile(path.join(webRoot(), 'index.html'));
+  });
 
   app.use(
     (

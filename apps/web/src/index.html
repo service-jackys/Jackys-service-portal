@@ -3,12 +3,1259 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Jacky's Service Portal for customer support and service operations."
+    />
     <title>Jacky's Service Portal</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --navy: #102b4e;
+        --navy-deep: #081a30;
+        --blue: #1769aa;
+        --blue-soft: #e9f3fb;
+        --red: #c53030;
+        --ink: #172334;
+        --muted: #5e6d7e;
+        --line: #d9e2eb;
+        --surface: #ffffff;
+        --surface-soft: #f4f7fa;
+        --success: #176b4d;
+        --warning: #8a5a00;
+        --shadow: 0 20px 55px rgb(16 43 78 / 10%);
+        --radius: 18px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        min-width: 320px;
+        margin: 0;
+        background: var(--surface-soft);
+        color: var(--ink);
+        font:
+          16px/1.55 Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+      a {
+        color: var(--blue);
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.62;
+      }
+      :focus-visible {
+        outline: 3px solid #f6bd4b;
+        outline-offset: 3px;
+      }
+      .skip-link {
+        position: absolute;
+        left: 1rem;
+        top: -4rem;
+        z-index: 10;
+        padding: 0.65rem 0.9rem;
+        border-radius: 8px;
+        background: #fff;
+        color: var(--navy);
+      }
+      .skip-link:focus {
+        top: 1rem;
+      }
+      .topbar {
+        background: var(--navy-deep);
+        color: #fff;
+        font-size: 0.84rem;
+      }
+      .topbar-inner,
+      .nav-inner,
+      .container {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+      .topbar-inner {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.45rem 0;
+      }
+      .topbar a {
+        color: #dceeff;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: rgb(255 255 255 / 94%);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(14px);
+      }
+      .nav-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        min-height: 76px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        color: var(--navy);
+        text-decoration: none;
+      }
+      .brand-mark {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 12px;
+        background: var(--red);
+        color: #fff;
+        font-size: 1.18rem;
+        font-weight: 800;
+        letter-spacing: -0.06em;
+      }
+      .brand-copy {
+        display: grid;
+        line-height: 1.15;
+      }
+      .brand-copy strong {
+        font-size: 0.98rem;
+        letter-spacing: 0.04em;
+      }
+      .brand-copy span {
+        margin-top: 0.22rem;
+        color: var(--muted);
+        font-size: 0.72rem;
+      }
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+      }
+      .button {
+        display: inline-flex;
+        min-height: 44px;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        padding: 0.68rem 1rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition:
+          transform 0.16s ease,
+          box-shadow 0.16s ease,
+          background-color 0.16s ease;
+      }
+      .button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgb(16 43 78 / 12%);
+      }
+      .button-primary {
+        background: var(--red);
+        color: #fff;
+      }
+      .button-primary:hover:not(:disabled) {
+        background: #a92525;
+      }
+      .button-secondary {
+        border-color: var(--navy);
+        background: var(--navy);
+        color: #fff;
+      }
+      .button-outline {
+        border-color: var(--line);
+        background: #fff;
+        color: var(--navy);
+      }
+      .button-link {
+        min-height: auto;
+        padding: 0.25rem;
+        color: var(--blue);
+      }
+
+      .hero {
+        overflow: hidden;
+        background: linear-gradient(120deg, var(--navy-deep), var(--navy));
+        color: #fff;
+      }
+      .hero-inner {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        align-items: center;
+        gap: 3rem;
+        min-height: 390px;
+        padding: 4rem 0;
+      }
+      .eyebrow {
+        margin: 0 0 0.8rem;
+        color: #9ed4ff;
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+      }
+      h1,
+      h2,
+      h3 {
+        line-height: 1.18;
+      }
+      h1 {
+        max-width: 700px;
+        margin: 0;
+        font-size: clamp(2.2rem, 5vw, 4.5rem);
+        letter-spacing: -0.055em;
+      }
+      .hero p {
+        max-width: 610px;
+        margin: 1.1rem 0 0;
+        color: #dceaff;
+        font-size: 1.08rem;
+      }
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.7rem;
+        margin-top: 1.6rem;
+      }
+      .hero .button-outline {
+        border-color: rgb(255 255 255 / 35%);
+        background: transparent;
+        color: #fff;
+      }
+      .hero-card {
+        padding: 1.6rem;
+        border: 1px solid rgb(255 255 255 / 18%);
+        border-radius: var(--radius);
+        background: rgb(255 255 255 / 9%);
+        box-shadow: var(--shadow);
+      }
+      .hero-card h2 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+      .hero-card p {
+        margin: 0.55rem 0 0;
+        font-size: 0.94rem;
+      }
+      .hero-stat {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        align-items: center;
+        margin-top: 1.25rem;
+      }
+      .hero-stat-icon {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 12px;
+        background: #f6bd4b;
+        color: var(--navy-deep);
+        font-weight: 900;
+      }
+      .hero-stat strong,
+      .hero-stat span {
+        display: block;
+      }
+      .hero-stat span {
+        color: #dceaff;
+        font-size: 0.84rem;
+      }
+
+      main {
+        padding: 3rem 0 5rem;
+      }
+      .section-heading {
+        max-width: 700px;
+        margin-bottom: 1.4rem;
+      }
+      .section-heading h2 {
+        margin: 0;
+        color: var(--navy);
+        font-size: clamp(1.6rem, 3vw, 2.3rem);
+        letter-spacing: -0.035em;
+      }
+      .section-heading p {
+        margin: 0.55rem 0 0;
+        color: var(--muted);
+      }
+      .workspace-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+        gap: 1.5rem;
+        align-items: start;
+      }
+      .card {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .card-body {
+        padding: clamp(1.2rem, 3vw, 2rem);
+      }
+      .card h3 {
+        margin: 0;
+        color: var(--navy);
+        font-size: 1.3rem;
+      }
+      .card-intro {
+        margin: 0.45rem 0 1.35rem;
+        color: var(--muted);
+        font-size: 0.94rem;
+      }
+      .form-section + .form-section {
+        margin-top: 1.5rem;
+        padding-top: 1.35rem;
+        border-top: 1px solid var(--line);
+      }
+      .form-section h4 {
+        margin: 0 0 0.9rem;
+        color: var(--navy);
+        font-size: 0.92rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+      }
+      .field {
+        display: grid;
+        gap: 0.35rem;
+      }
+      .field-wide {
+        grid-column: 1 / -1;
+      }
+      label {
+        color: var(--ink);
+        font-size: 0.88rem;
+        font-weight: 700;
+      }
+      .required {
+        color: var(--red);
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid #cbd7e2;
+        border-radius: 9px;
+        background: #fff;
+        color: var(--ink);
+        padding: 0.72rem 0.8rem;
+        transition:
+          border-color 0.16s ease,
+          box-shadow 0.16s ease;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px rgb(23 105 170 / 12%);
+        outline: 0;
+      }
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+      .field-error {
+        min-height: 1.15em;
+        color: var(--red);
+        font-size: 0.78rem;
+      }
+      .form-footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 1.4rem;
+      }
+      .form-note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+      .notice {
+        margin: 0 0 1rem;
+        border-radius: 10px;
+        padding: 0.8rem 0.95rem;
+        font-size: 0.9rem;
+      }
+      .notice[hidden] {
+        display: none;
+      }
+      .notice-error {
+        border: 1px solid #efb5b5;
+        background: #fff4f4;
+        color: #8c2020;
+      }
+      .notice-success {
+        border: 1px solid #a9d9c5;
+        background: #effaf4;
+        color: var(--success);
+      }
+      .success-reference {
+        margin: 0.7rem 0 0;
+        font-size: 1.6rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+      }
+
+      .info-stack {
+        display: grid;
+        gap: 1rem;
+      }
+      .info-card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--surface);
+        padding: 1.3rem;
+      }
+      .info-card h3 {
+        margin: 0;
+        font-size: 1.05rem;
+      }
+      .info-card p {
+        margin: 0.45rem 0 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .info-list {
+        display: grid;
+        gap: 0.85rem;
+        margin: 1.1rem 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .info-list li {
+        display: flex;
+        gap: 0.7rem;
+        align-items: flex-start;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+      .info-list b {
+        display: grid;
+        flex: 0 0 24px;
+        height: 24px;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--blue-soft);
+        color: var(--blue);
+        font-size: 0.75rem;
+      }
+
+      .staff-section {
+        margin-top: 3rem;
+      }
+      .auth-card {
+        max-width: 720px;
+      }
+      .auth-tabs {
+        display: flex;
+        gap: 0.4rem;
+        margin: 0 0 1.25rem;
+        border-bottom: 1px solid var(--line);
+      }
+      .auth-tab {
+        border: 0;
+        border-bottom: 3px solid transparent;
+        background: transparent;
+        color: var(--muted);
+        padding: 0.65rem 0.5rem;
+        font-weight: 700;
+      }
+      .auth-tab[aria-selected='true'] {
+        border-color: var(--red);
+        color: var(--navy);
+      }
+      .auth-panel[hidden] {
+        display: none;
+      }
+      .dev-note {
+        border-left: 4px solid #f6bd4b;
+        background: #fff8e8;
+        color: #674900;
+        padding: 0.7rem 0.85rem;
+        font-size: 0.84rem;
+      }
+
+      .dashboard {
+        display: grid;
+        grid-template-columns: 270px minmax(0, 1fr);
+        gap: 1.5rem;
+        align-items: start;
+      }
+      .dashboard-nav {
+        position: sticky;
+        top: 96px;
+      }
+      .user-card {
+        padding: 1.2rem;
+      }
+      .user-avatar {
+        display: grid;
+        width: 44px;
+        height: 44px;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--blue-soft);
+        color: var(--blue);
+        font-weight: 800;
+      }
+      .user-card strong {
+        display: block;
+        margin-top: 0.8rem;
+        color: var(--navy);
+      }
+      .user-card small {
+        color: var(--muted);
+        overflow-wrap: anywhere;
+      }
+      .role {
+        display: inline-block;
+        margin-top: 0.65rem;
+        border-radius: 999px;
+        background: #edf2f7;
+        color: var(--navy);
+        padding: 0.2rem 0.55rem;
+        font-size: 0.73rem;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+      .dashboard-links {
+        display: grid;
+        gap: 0.35rem;
+        margin-top: 1rem;
+      }
+      .dashboard-link {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        justify-content: space-between;
+        border: 0;
+        border-radius: 9px;
+        background: transparent;
+        color: var(--muted);
+        padding: 0.7rem 0.8rem;
+        text-align: left;
+        font-weight: 700;
+      }
+      .dashboard-link[aria-current='page'],
+      .dashboard-link:hover {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+      .dashboard-content {
+        min-width: 0;
+      }
+      .dashboard-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .dashboard-header h2 {
+        margin: 0;
+        color: var(--navy);
+        font-size: 1.7rem;
+      }
+      .dashboard-header p {
+        margin: 0.35rem 0 0;
+        color: var(--muted);
+      }
+      .dashboard-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .inbox-tools {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        margin-bottom: 1rem;
+      }
+      .inbox-tools input,
+      .inbox-tools select {
+        max-width: 220px;
+        min-height: 42px;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.88rem;
+      }
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 0.85rem 0.7rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        color: var(--muted);
+        font-size: 0.74rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      td strong {
+        color: var(--navy);
+      }
+      .table-link {
+        border: 0;
+        background: transparent;
+        color: var(--blue);
+        padding: 0;
+        font-weight: 800;
+        text-align: left;
+      }
+      .status {
+        display: inline-block;
+        border-radius: 999px;
+        background: #edf2f7;
+        color: var(--navy);
+        padding: 0.25rem 0.55rem;
+        font-size: 0.73rem;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .status-new {
+        background: #e9f3fb;
+        color: #155b91;
+      }
+      .status-closed {
+        background: #effaf4;
+        color: var(--success);
+      }
+      .status-cancelled {
+        background: #fff0f0;
+        color: #9a2727;
+      }
+      .empty-state {
+        padding: 2rem 1rem;
+        color: var(--muted);
+        text-align: center;
+      }
+      .detail-panel {
+        margin-top: 1.3rem;
+        border-top: 1px solid var(--line);
+        padding-top: 1.3rem;
+      }
+      .detail-panel[hidden] {
+        display: none;
+      }
+      .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.9rem 1.5rem;
+      }
+      .detail-item small {
+        display: block;
+        color: var(--muted);
+        font-size: 0.74rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .detail-item p {
+        margin: 0.15rem 0 0;
+        overflow-wrap: anywhere;
+      }
+      .history {
+        margin: 1.4rem 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .history li {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        gap: 1rem;
+        border-top: 1px solid var(--line);
+        padding: 0.8rem 0;
+      }
+      .history time {
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+      .history strong {
+        color: var(--navy);
+      }
+      .visually-hidden {
+        position: absolute !important;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+      }
+      footer {
+        border-top: 1px solid var(--line);
+        background: #fff;
+        color: var(--muted);
+        padding: 1.3rem 0;
+        font-size: 0.82rem;
+      }
+      footer .container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 0.8rem;
+      }
+
+      @media (max-width: 850px) {
+        .hero-inner,
+        .workspace-grid,
+        .dashboard {
+          grid-template-columns: 1fr;
+        }
+        .dashboard-nav {
+          position: static;
+        }
+        .dashboard-links {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 600px) {
+        .topbar-inner {
+          display: block;
+          text-align: center;
+        }
+        .topbar-inner span {
+          display: block;
+        }
+        .nav-inner {
+          min-height: 68px;
+        }
+        .brand-copy span {
+          display: none;
+        }
+        .nav-actions .button-outline {
+          display: none;
+        }
+        .hero-inner {
+          min-height: 0;
+          padding: 3rem 0;
+        }
+        main {
+          padding-top: 2rem;
+        }
+        .form-grid,
+        .detail-grid,
+        .dashboard-links {
+          grid-template-columns: 1fr;
+        }
+        .field-wide {
+          grid-column: auto;
+        }
+        .form-footer,
+        .dashboard-header {
+          align-items: stretch;
+          flex-direction: column;
+        }
+        .form-footer .button,
+        .dashboard-actions .button {
+          width: 100%;
+        }
+        .inbox-tools > * {
+          max-width: none !important;
+          flex: 1 1 100%;
+        }
+        th,
+        td {
+          padding-inline: 0.45rem;
+        }
+        .history li {
+          grid-template-columns: 1fr;
+          gap: 0.25rem;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+        }
+      }
+    </style>
   </head>
   <body>
-    <main>
-      <h1>Jacky's Service Portal</h1>
-      <p>The new service platform foundation is ready.</p>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <div class="topbar">
+      <div class="topbar-inner">
+        <span>Service support for Jacky's customers and teams</span>
+        <span>Internal staff access is development-only</span>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Primary navigation">
+      <div class="nav-inner">
+        <a class="brand" href="#top" aria-label="Jacky's Service Portal home">
+          <span class="brand-mark" aria-hidden="true">J</span>
+          <span class="brand-copy"
+            ><strong>JACKY'S DISTRIBUTION</strong><span>Service Center Portal</span></span
+          >
+        </a>
+        <div class="nav-actions">
+          <a class="button button-outline" href="#staff-access">Staff sign in</a>
+          <a class="button button-primary" href="#complaint-form">Submit a request</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="hero" id="top">
+      <div class="container hero-inner">
+        <div>
+          <p class="eyebrow">Service, made clear</p>
+          <h1>Get the right support for every service request.</h1>
+          <p>
+            Send us the details of your product issue and our service team will have the information
+            they need to respond efficiently.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#complaint-form">Start a service request</a>
+            <a class="button button-outline" href="#staff-access">Open staff workspace</a>
+          </div>
+        </div>
+        <aside class="hero-card" aria-label="Service request benefits">
+          <h2>A better handoff starts here</h2>
+          <p>Complete details help the team understand the issue before the first follow-up.</p>
+          <div class="hero-stat">
+            <span class="hero-stat-icon" aria-hidden="true">1</span
+            ><span
+              ><strong>One clear request</strong
+              ><span>Capture customer, product, and fault details together.</span></span
+            >
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-icon" aria-hidden="true">2</span
+            ><span
+              ><strong>Trackable reference</strong
+              ><span>Receive a complaint reference after submission.</span></span
+            >
+          </div>
+        </aside>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <section class="container" id="complaint-form" aria-labelledby="complaint-heading">
+        <div class="section-heading">
+          <p class="eyebrow">For customers and partners</p>
+          <h2>Register a service complaint</h2>
+          <p>
+            Fields marked with <span class="required">*</span> are required. Please provide enough
+            detail for the service team to assess your request.
+          </p>
+        </div>
+        <div class="workspace-grid">
+          <form class="card" id="publicComplaintForm" novalidate>
+            <div class="card-body">
+              <div id="publicFormMessage" class="notice notice-error" role="alert" hidden></div>
+              <div id="publicSuccess" class="notice notice-success" role="status" hidden>
+                <strong>Your request has been received.</strong>
+                <p class="success-reference" id="successReference"></p>
+                <p>Keep this reference for future service conversations.</p>
+                <button class="button button-outline" type="button" id="newComplaintButton">
+                  Submit another request
+                </button>
+              </div>
+              <div id="complaintFields">
+                <div class="form-section">
+                  <h4>Customer details</h4>
+                  <div class="form-grid">
+                    <div class="field">
+                      <label for="customerType"
+                        >Customer type <span class="required">*</span></label
+                      >
+                      <select id="customerType" name="customerType" required>
+                        <option value="">Select a type</option>
+                        <option value="individual">Individual</option>
+                        <option value="company">Company</option>
+                        <option value="b2b">B2B partner</option>
+                      </select>
+                      <span class="field-error" data-error-for="customerType"></span>
+                    </div>
+                    <div class="field">
+                      <label for="customerName"
+                        >Customer name <span class="required">*</span></label
+                      >
+                      <input id="customerName" name="customerName" autocomplete="name" required />
+                      <span class="field-error" data-error-for="customerName"></span>
+                    </div>
+                    <div class="field">
+                      <label for="contactNumber"
+                        >Contact number <span class="required">*</span></label
+                      >
+                      <input
+                        id="contactNumber"
+                        name="contactNumber"
+                        type="tel"
+                        autocomplete="tel"
+                        required
+                      />
+                      <span class="field-error" data-error-for="contactNumber"></span>
+                    </div>
+                    <div class="field">
+                      <label for="customerEmail">Email address</label>
+                      <input
+                        id="customerEmail"
+                        name="customerEmail"
+                        type="email"
+                        autocomplete="email"
+                      />
+                      <span class="field-error" data-error-for="customerEmail"></span>
+                    </div>
+                    <div class="field field-wide">
+                      <label for="address">Address</label>
+                      <input id="address" name="address" autocomplete="street-address" />
+                      <span class="field-error" data-error-for="address"></span>
+                    </div>
+                    <div class="field">
+                      <label for="region">Region</label>
+                      <input id="region" name="region" />
+                      <span class="field-error" data-error-for="region"></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-section">
+                  <h4>Product and issue</h4>
+                  <div class="form-grid">
+                    <div class="field">
+                      <label for="brand">Brand</label>
+                      <input id="brand" name="brand" />
+                      <span class="field-error" data-error-for="brand"></span>
+                    </div>
+                    <div class="field">
+                      <label for="model">Model</label>
+                      <input id="model" name="model" />
+                      <span class="field-error" data-error-for="model"></span>
+                    </div>
+                    <div class="field field-wide">
+                      <label for="serialOrItemCode">Serial number or item code</label>
+                      <input id="serialOrItemCode" name="serialOrItemCode" />
+                      <span class="field-error" data-error-for="serialOrItemCode"></span>
+                    </div>
+                    <div class="field field-wide">
+                      <label for="description"
+                        >Describe the issue <span class="required">*</span></label
+                      >
+                      <textarea id="description" name="description" required></textarea>
+                      <span class="field-error" data-error-for="description"></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-footer">
+                  <p class="form-note">
+                    Your information is sent securely to the service application.
+                  </p>
+                  <button class="button button-primary" type="submit" id="submitComplaintButton">
+                    Submit service request
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+          <aside class="info-stack">
+            <div class="info-card">
+              <h3>What happens next?</h3>
+              <ul class="info-list">
+                <li><b>1</b><span>Your request is registered with a unique reference.</span></li>
+                <li>
+                  <b>2</b
+                  ><span>The service team reviews the information and follows up if needed.</span>
+                </li>
+                <li>
+                  <b>3</b><span>Scheduling and further updates are coordinated by the team.</span>
+                </li>
+              </ul>
+            </div>
+            <div class="info-card">
+              <h3>Need help before submitting?</h3>
+              <p>
+                Include the product model, serial or item code, and a clear description of the fault
+                whenever those details are available.
+              </p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="container staff-section" id="staff-access" aria-labelledby="staff-heading">
+        <div class="section-heading">
+          <p class="eyebrow">For service teams</p>
+          <h2 id="staff-heading">Staff workspace</h2>
+          <p>
+            Sign in to review complaints and their service history. Local authentication is intended
+            for development and testing only.
+          </p>
+        </div>
+        <div class="card auth-card" id="authCard">
+          <div class="card-body">
+            <div id="authMessage" class="notice notice-error" role="alert" hidden></div>
+            <div class="auth-tabs" role="tablist" aria-label="Staff access options">
+              <button
+                class="auth-tab"
+                type="button"
+                role="tab"
+                aria-selected="true"
+                aria-controls="loginPanel"
+                id="loginTab"
+              >
+                Sign in
+              </button>
+              <button
+                class="auth-tab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="bootstrapPanel"
+                id="bootstrapTab"
+              >
+                First-time setup
+              </button>
+            </div>
+            <section class="auth-panel" id="loginPanel" role="tabpanel" aria-labelledby="loginTab">
+              <h3>Sign in to the workspace</h3>
+              <p class="card-intro">
+                Use the local staff account configured for this development environment.
+              </p>
+              <form id="loginForm" novalidate>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="loginEmail">Email address</label
+                    ><input
+                      id="loginEmail"
+                      name="email"
+                      type="email"
+                      autocomplete="username"
+                      required
+                    /><span class="field-error" data-error-for="loginEmail"></span>
+                  </div>
+                  <div class="field">
+                    <label for="loginPassword">Password</label
+                    ><input
+                      id="loginPassword"
+                      name="password"
+                      type="password"
+                      autocomplete="current-password"
+                      required
+                    /><span class="field-error" data-error-for="loginPassword"></span>
+                  </div>
+                </div>
+                <div class="form-footer">
+                  <span></span
+                  ><button class="button button-secondary" type="submit" id="loginButton">
+                    Sign in
+                  </button>
+                </div>
+              </form>
+            </section>
+            <section
+              class="auth-panel"
+              id="bootstrapPanel"
+              role="tabpanel"
+              aria-labelledby="bootstrapTab"
+              hidden
+            >
+              <h3>Create the local administrator</h3>
+              <p class="card-intro">
+                This one-time flow requires the bootstrap token supplied by the local environment
+                owner. Do not place it in source code.
+              </p>
+              <p class="dev-note">
+                This account is for local development only. Production authentication is not created
+                by this page.
+              </p>
+              <form id="bootstrapForm" novalidate>
+                <div class="form-grid">
+                  <div class="field field-wide">
+                    <label for="bootstrapToken">Bootstrap token</label
+                    ><input
+                      id="bootstrapToken"
+                      name="bootstrapToken"
+                      type="password"
+                      autocomplete="off"
+                      required
+                    /><span class="field-error" data-error-for="bootstrapToken"></span>
+                  </div>
+                  <div class="field">
+                    <label for="bootstrapName">Name</label
+                    ><input id="bootstrapName" name="name" autocomplete="name" required /><span
+                      class="field-error"
+                      data-error-for="bootstrapName"
+                    ></span>
+                  </div>
+                  <div class="field">
+                    <label for="bootstrapEmail">Email address</label
+                    ><input
+                      id="bootstrapEmail"
+                      name="email"
+                      type="email"
+                      autocomplete="email"
+                      required
+                    /><span class="field-error" data-error-for="bootstrapEmail"></span>
+                  </div>
+                  <div class="field field-wide">
+                    <label for="bootstrapPassword">Password</label
+                    ><input
+                      id="bootstrapPassword"
+                      name="password"
+                      type="password"
+                      autocomplete="new-password"
+                      minlength="12"
+                      required
+                    /><span class="field-error" data-error-for="bootstrapPassword"></span>
+                  </div>
+                </div>
+                <div class="form-footer">
+                  <span></span
+                  ><button class="button button-secondary" type="submit" id="bootstrapButton">
+                    Create administrator
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="container staff-section"
+        id="staff-workspace"
+        aria-labelledby="workspace-heading"
+        hidden
+      >
+        <div class="dashboard">
+          <aside class="dashboard-nav">
+            <div class="card user-card">
+              <div class="user-avatar" id="userAvatar" aria-hidden="true">S</div>
+              <strong id="userName">Staff user</strong>
+              <small id="userEmail"></small>
+              <span class="role" id="userRole">Staff</span>
+              <div class="dashboard-links">
+                <button class="dashboard-link" type="button" aria-current="page" id="complaintsNav">
+                  Complaint inbox <span aria-hidden="true">→</span>
+                </button>
+                <button class="dashboard-link" type="button" id="signOutButton">
+                  Sign out <span aria-hidden="true">↗</span>
+                </button>
+              </div>
+            </div>
+          </aside>
+          <div class="dashboard-content">
+            <div class="dashboard-header">
+              <div>
+                <p class="eyebrow">Protected workspace</p>
+                <h2 id="workspace-heading">Complaint inbox</h2>
+                <p>Review incoming service requests and open their history.</p>
+              </div>
+              <div class="dashboard-actions">
+                <button class="button button-outline" type="button" id="refreshComplaintsButton">
+                  Refresh inbox
+                </button>
+              </div>
+            </div>
+            <div id="workspaceMessage" class="notice notice-error" role="alert" hidden></div>
+            <div class="card">
+              <div class="card-body">
+                <div class="inbox-tools">
+                  <label class="visually-hidden" for="complaintSearch">Search complaints</label
+                  ><input
+                    id="complaintSearch"
+                    type="search"
+                    placeholder="Search reference or customer"
+                  /><label class="visually-hidden" for="complaintStatusFilter">Filter status</label
+                  ><select id="complaintStatusFilter">
+                    <option value="">All statuses</option>
+                    <option>New</option>
+                    <option>Under Review</option>
+                    <option>Pending Information</option>
+                    <option>Ready for Scheduling</option>
+                    <option>Scheduled</option>
+                    <option>Closed</option>
+                    <option>Cancelled</option></select
+                  ><button class="button button-secondary" type="button" id="applyComplaintFilters">
+                    Apply filters
+                  </button>
+                </div>
+                <div class="table-wrap">
+                  <table>
+                    <caption class="visually-hidden">
+                      Service complaints
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th>Reference</th>
+                        <th>Customer</th>
+                        <th>Issue</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                      </tr>
+                    </thead>
+                    <tbody id="complaintsBody"></tbody>
+                  </table>
+                </div>
+                <p class="empty-state" id="complaintsEmpty" hidden>
+                  No complaints match the selected filters.
+                </p>
+                <div class="detail-panel" id="complaintDetail" hidden>
+                  <div class="dashboard-header">
+                    <div>
+                      <h3 id="detailHeading">Complaint details</h3>
+                      <p id="detailStatus"></p>
+                    </div>
+                    <button class="button button-outline" type="button" id="closeDetailButton">
+                      Close details
+                    </button>
+                  </div>
+                  <div class="detail-grid" id="detailGrid"></div>
+                  <h4>History</h4>
+                  <ol class="history" id="historyList"></ol>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
+
+    <footer>
+      <div class="container">
+        <span>Jacky's Service Portal</span><span>Customer service and operations workspace</span>
+      </div>
+    </footer>
+    <script src="/portal/app.js" defer></script>
   </body>
 </html>
