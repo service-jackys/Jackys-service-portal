@@ -21,16 +21,18 @@ This checklist tracks the phase-by-phase migration from the existing Google Apps
 
 The first browser slice is complete. The next work should extend the service operations experience without changing the existing production Apps Script deployment.
 
-- [ ] Add complaint notes controls to the staff complaint detail view.
-- [ ] Add complaint status update controls with server-authoritative transition handling.
-- [ ] Add a new service-request workspace for staff follow-up.
-- [ ] Add appointment scheduling screens.
-- [ ] Add technician assignment UI.
-- [ ] Add appointment list and calendar views.
-- [ ] Add browser tests for authenticated staff workflows.
-- [ ] Add more role-gated navigation tests for sales, management, and admin permissions.
-- [ ] Add browser coverage for complaint detail, notes, status changes, scheduling, and assignment.
-- [ ] Add clear loading, empty, error, and unauthorized recovery states for each protected view.
+- [x] Add complaint notes controls to the staff complaint detail view.
+- [x] Add complaint status update controls with server-authoritative transition handling.
+- [x] Add a new service-request workspace for staff follow-up.
+- [x] Add appointment scheduling for ready complaints with technician availability lookup.
+- [x] Add technician assignment and unassignment UI.
+- [x] Add the protected appointment list view and authenticated calendar-file download.
+- [x] Add browser tests for authenticated staff workflows.
+- [x] Add more role-gated navigation tests for sales, management, and admin permissions.
+- [x] Add browser coverage for complaint detail, notes, status changes, scheduling, and assignment.
+- [x] Add clear loading, empty, error, unauthorized, forbidden, not-found, conflict, and retry recovery states for protected views.
+- [x] Add calendar month/week views and drag-and-drop scheduling through server-authoritative rescheduling.
+- [x] Add accessible appointment rescheduling with terminal-state protection, conflict handling, and authoritative refreshes.
 
 ## Later phases
 

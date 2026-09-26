@@ -109,7 +109,18 @@ export const technicianWriteSchema = z
   .strict();
 
 const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Time must use HH:mm format.');
-const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must use YYYY-MM-DD format.');
+const dateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must use YYYY-MM-DD format.')
+  .refine((value) => {
+    const [year, month, day] = value.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return (
+      date.getUTCFullYear() === year &&
+      date.getUTCMonth() === month - 1 &&
+      date.getUTCDate() === day
+    );
+  }, 'Date must be a real calendar date.');
 
 export const availabilityWindowSchema = z
   .object({
@@ -186,6 +197,10 @@ export const appointmentAssignmentSchema = z
     technicianId: z.string().regex(/^\d+$/).nullable(),
   })
   .strict();
+export const appointmentScheduleUpdateSchema = z
+  .object({ appointmentDate: dateSchema, appointmentTime: timeSchema })
+  .strict();
+export type AppointmentScheduleUpdateInput = z.infer<typeof appointmentScheduleUpdateSchema>;
 export const appointmentStatusUpdateSchema = z
   .object({ status: appointmentStatusSchema, reason: z.string().trim().max(1000).optional() })
   .strict();

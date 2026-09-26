@@ -567,6 +567,9 @@
         text-align: left;
         font-weight: 700;
       }
+      .dashboard-link[hidden] {
+        display: none;
+      }
       .dashboard-link[aria-current='page'],
       .dashboard-link:hover {
         background: var(--blue-soft);
@@ -609,6 +612,86 @@
       }
       .table-wrap {
         overflow-x: auto;
+      }
+      .calendar-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.65rem;
+        margin: 1.25rem 0 0.8rem;
+      }
+      .calendar-toolbar-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .calendar-title {
+        min-width: 12rem;
+        margin: 0;
+        color: var(--navy);
+        text-align: center;
+      }
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+      .calendar-cell {
+        min-height: 7rem;
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        padding: 0.55rem;
+        background: #fff;
+      }
+      .calendar-cell:nth-child(7n) {
+        border-right: 0;
+      }
+      .calendar-cell-header {
+        color: var(--muted);
+        font-size: 0.76rem;
+        font-weight: 800;
+      }
+      .calendar-cell-today {
+        background: var(--blue-soft);
+      }
+      .calendar-event {
+        display: block;
+        width: 100%;
+        margin-top: 0.4rem;
+        border: 1px solid #b8d6ed;
+        border-radius: 8px;
+        background: #f3f9fe;
+        color: var(--navy);
+        padding: 0.42rem;
+        text-align: left;
+        font-size: 0.78rem;
+        cursor: pointer;
+      }
+      .calendar-event[draggable='true'] {
+        cursor: grab;
+      }
+      .calendar-event[draggable='true']:active {
+        cursor: grabbing;
+      }
+      .calendar-event-status {
+        display: block;
+        color: var(--muted);
+        font-size: 0.7rem;
+      }
+      .calendar-week {
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+      }
+      .calendar-week .calendar-cell {
+        min-height: 18rem;
+      }
+      .calendar-empty {
+        grid-column: 1 / -1;
+        padding: 2rem 1rem;
+        color: var(--muted);
+        text-align: center;
       }
       table {
         width: 100%;
@@ -711,6 +794,38 @@
       .history strong {
         color: var(--navy);
       }
+      .detail-actions[hidden] {
+        display: none;
+      }
+      .detail-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+        border-top: 1px solid var(--line);
+        padding-top: 1.3rem;
+      }
+      .detail-action-card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--surface-soft);
+        padding: 1rem;
+      }
+      .detail-action-card h4 {
+        margin: 0;
+        color: var(--navy);
+      }
+      .detail-action-card p {
+        margin: 0.35rem 0 0.8rem;
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+      .detail-action-card .form-footer {
+        margin-top: 0.8rem;
+      }
+      .detail-action-card textarea {
+        min-height: 110px;
+      }
       .visually-hidden {
         position: absolute !important;
         width: 1px;
@@ -772,6 +887,7 @@
         }
         .form-grid,
         .detail-grid,
+        .detail-actions,
         .dashboard-links {
           grid-template-columns: 1fr;
         }
@@ -1168,6 +1284,12 @@
                 <button class="dashboard-link" type="button" aria-current="page" id="complaintsNav">
                   Complaint inbox <span aria-hidden="true">→</span>
                 </button>
+                <button class="dashboard-link" type="button" id="serviceRequestsNav" hidden>
+                  Service requests <span aria-hidden="true">→</span>
+                </button>
+                <button class="dashboard-link" type="button" id="appointmentsNav" hidden>
+                  Appointments <span aria-hidden="true">→</span>
+                </button>
                 <button class="dashboard-link" type="button" id="signOutButton">
                   Sign out <span aria-hidden="true">↗</span>
                 </button>
@@ -1179,16 +1301,47 @@
               <div>
                 <p class="eyebrow">Protected workspace</p>
                 <h2 id="workspace-heading">Complaint inbox</h2>
-                <p>Review incoming service requests and open their history.</p>
+                <p id="workspaceDescription">
+                  Review incoming service requests and open their history.
+                </p>
               </div>
               <div class="dashboard-actions">
                 <button class="button button-outline" type="button" id="refreshComplaintsButton">
                   Refresh inbox
                 </button>
+                <button
+                  class="button button-outline"
+                  type="button"
+                  id="refreshAppointmentsButton"
+                  hidden
+                >
+                  Refresh appointments
+                </button>
               </div>
             </div>
             <div id="workspaceMessage" class="notice notice-error" role="alert" hidden></div>
-            <div class="card">
+            <div id="workspaceRecovery" class="notice notice-error" role="alert" hidden>
+              <p id="workspaceRecoveryMessage"></p>
+              <div class="form-footer">
+                <button
+                  class="button button-secondary"
+                  type="button"
+                  id="retryWorkspaceButton"
+                  hidden
+                >
+                  Retry
+                </button>
+                <button
+                  class="button button-outline"
+                  type="button"
+                  id="returnAppointmentsButton"
+                  hidden
+                >
+                  Return to appointments
+                </button>
+              </div>
+            </div>
+            <div class="card" id="complaintWorkspace">
               <div class="card-body">
                 <div class="inbox-tools">
                   <label class="visually-hidden" for="complaintSearch">Search complaints</label
@@ -1241,8 +1394,353 @@
                     </button>
                   </div>
                   <div class="detail-grid" id="detailGrid"></div>
+                  <div class="detail-actions" id="complaintActions" hidden>
+                    <section
+                      class="detail-action-card"
+                      id="notesAction"
+                      aria-labelledby="notesHeading"
+                    >
+                      <h4 id="notesHeading">CCE notes</h4>
+                      <p>Keep the internal service follow-up notes current.</p>
+                      <form id="notesForm" novalidate>
+                        <label for="complaintNotes">Notes</label>
+                        <textarea id="complaintNotes" name="notes" maxlength="10000"></textarea>
+                        <span class="field-error" data-error-for="complaintNotes"></span>
+                        <div class="form-footer">
+                          <span></span>
+                          <button
+                            class="button button-secondary"
+                            type="submit"
+                            id="saveNotesButton"
+                          >
+                            Save notes
+                          </button>
+                        </div>
+                      </form>
+                    </section>
+                    <section
+                      class="detail-action-card"
+                      id="statusAction"
+                      aria-labelledby="statusHeading"
+                    >
+                      <h4 id="statusHeading">Update status</h4>
+                      <p>Choose the next status allowed by the current workflow.</p>
+                      <form id="statusForm" novalidate>
+                        <div class="field">
+                          <label for="complaintNextStatus">Next status</label>
+                          <select id="complaintNextStatus" name="status"></select>
+                          <span class="field-error" data-error-for="complaintNextStatus"></span>
+                        </div>
+                        <div class="field">
+                          <label for="complaintStatusReason"
+                            >Reason <span class="visually-hidden">(optional)</span></label
+                          >
+                          <textarea
+                            id="complaintStatusReason"
+                            name="reason"
+                            maxlength="1000"
+                          ></textarea>
+                          <span class="field-error" data-error-for="complaintStatusReason"></span>
+                        </div>
+                        <div class="form-footer">
+                          <span></span>
+                          <button
+                            class="button button-secondary"
+                            type="submit"
+                            id="updateStatusButton"
+                          >
+                            Update status
+                          </button>
+                        </div>
+                      </form>
+                    </section>
+                    <section
+                      class="detail-action-card"
+                      id="scheduleAction"
+                      aria-labelledby="scheduleHeading"
+                      hidden
+                    >
+                      <h4 id="scheduleHeading">Schedule appointment</h4>
+                      <p>Choose a service time and an available technician.</p>
+                      <form id="scheduleForm" novalidate>
+                        <div class="field">
+                          <label for="appointmentDate">Appointment date</label>
+                          <input id="appointmentDate" name="appointmentDate" type="date" />
+                          <span class="field-error" data-error-for="appointmentDate"></span>
+                        </div>
+                        <div class="field">
+                          <label for="appointmentTime">Appointment time</label>
+                          <input id="appointmentTime" name="appointmentTime" type="time" />
+                          <span class="field-error" data-error-for="appointmentTime"></span>
+                        </div>
+                        <div class="field">
+                          <button
+                            class="button button-outline"
+                            type="button"
+                            id="findTechniciansButton"
+                          >
+                            Find available technicians
+                          </button>
+                          <span class="field-error" data-error-for="technicianId"></span>
+                        </div>
+                        <div class="field">
+                          <label for="technicianId">Technician</label>
+                          <select id="technicianId" name="technicianId" disabled>
+                            <option value="">Select a date and time first</option>
+                          </select>
+                          <p class="form-note" id="scheduleAvailabilityMessage" role="status"></p>
+                        </div>
+                        <div class="form-footer">
+                          <span class="form-note" id="scheduleResult" role="status"></span>
+                          <button
+                            class="button button-secondary"
+                            type="submit"
+                            id="scheduleAppointmentButton"
+                          >
+                            Schedule appointment
+                          </button>
+                        </div>
+                      </form>
+                    </section>
+                  </div>
                   <h4>History</h4>
                   <ol class="history" id="historyList"></ol>
+                </div>
+              </div>
+            </div>
+            <div class="card" id="appointmentWorkspace" hidden>
+              <div class="card-body">
+                <div class="inbox-tools">
+                  <label class="visually-hidden" for="appointmentSearch">Search appointments</label
+                  ><input
+                    id="appointmentSearch"
+                    type="search"
+                    placeholder="Search reference or customer"
+                  /><label class="visually-hidden" for="appointmentStatusFilter"
+                    >Filter appointment status</label
+                  ><select id="appointmentStatusFilter">
+                    <option value="">All statuses</option>
+                    <option>Scheduled</option>
+                    <option>In Progress</option>
+                    <option>Completed</option>
+                    <option>Cancelled</option></select
+                  ><label class="visually-hidden" for="appointmentFrom">Appointments from</label
+                  ><input id="appointmentFrom" type="date" /><label
+                    class="visually-hidden"
+                    for="appointmentTo"
+                    >Appointments to</label
+                  ><input id="appointmentTo" type="date" /><button
+                    class="button button-secondary"
+                    type="button"
+                    id="applyAppointmentFilters"
+                  >
+                    Apply filters
+                  </button>
+                </div>
+                <div class="calendar-toolbar" aria-label="Appointment calendar controls">
+                  <div class="calendar-toolbar-group">
+                    <button class="button button-outline" type="button" id="calendarPreviousButton">
+                      Previous
+                    </button>
+                    <button class="button button-outline" type="button" id="calendarTodayButton">
+                      Today
+                    </button>
+                    <button class="button button-outline" type="button" id="calendarNextButton">
+                      Next
+                    </button>
+                  </div>
+                  <h3 class="calendar-title" id="calendarTitle">Appointment calendar</h3>
+                  <div class="calendar-toolbar-group" role="group" aria-label="Calendar view">
+                    <button
+                      class="button button-secondary"
+                      type="button"
+                      id="calendarMonthButton"
+                      aria-pressed="true"
+                    >
+                      Month
+                    </button>
+                    <button
+                      class="button button-outline"
+                      type="button"
+                      id="calendarWeekButton"
+                      aria-pressed="false"
+                    >
+                      Week
+                    </button>
+                  </div>
+                </div>
+                <div id="calendarMessage" class="notice notice-error" role="alert" hidden></div>
+                <div class="calendar-grid" id="appointmentCalendar" aria-live="polite"></div>
+                <div class="table-wrap">
+                  <table>
+                    <caption class="visually-hidden">
+                      Appointments
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th>Reference</th>
+                        <th>Customer</th>
+                        <th>Schedule</th>
+                        <th>Technician</th>
+                        <th>Status</th>
+                        <th>Region</th>
+                      </tr>
+                    </thead>
+                    <tbody id="appointmentsBody"></tbody>
+                  </table>
+                </div>
+                <p class="empty-state" id="appointmentsEmpty" hidden>
+                  No appointments match the selected filters.
+                </p>
+                <div class="detail-panel" id="appointmentDetail" hidden>
+                  <div class="dashboard-header">
+                    <div>
+                      <h3 id="appointmentDetailHeading">Appointment details</h3>
+                      <p id="appointmentDetailStatus"></p>
+                    </div>
+                    <button
+                      class="button button-outline"
+                      type="button"
+                      id="closeAppointmentDetailButton"
+                    >
+                      Close details
+                    </button>
+                  </div>
+                  <div class="detail-grid" id="appointmentDetailGrid"></div>
+                  <div class="detail-actions" id="appointmentActions" hidden>
+                    <section
+                      class="detail-action-card"
+                      id="appointmentAssignmentAction"
+                      aria-labelledby="appointmentAssignmentHeading"
+                    >
+                      <h4 id="appointmentAssignmentHeading">Assign technician</h4>
+                      <p>
+                        Choose an active technician for this appointment or remove the assignment.
+                      </p>
+                      <form id="appointmentAssignmentForm" novalidate>
+                        <div class="field">
+                          <label for="appointmentTechnician">Technician</label>
+                          <select id="appointmentTechnician" name="technicianId">
+                            <option value="">Loading technicians…</option>
+                          </select>
+                          <span class="field-error" data-error-for="appointmentTechnician"></span>
+                        </div>
+                        <div class="form-footer">
+                          <button
+                            class="button button-outline"
+                            type="button"
+                            id="unassignAppointmentButton"
+                          >
+                            Unassign
+                          </button>
+                          <button
+                            class="button button-secondary"
+                            type="submit"
+                            id="saveAppointmentAssignmentButton"
+                          >
+                            Save assignment
+                          </button>
+                        </div>
+                      </form>
+                    </section>
+                    <section
+                      class="detail-action-card"
+                      id="appointmentScheduleAction"
+                      aria-labelledby="appointmentScheduleHeading"
+                    >
+                      <h4 id="appointmentScheduleHeading">Reschedule appointment</h4>
+                      <p>
+                        Choose a new date and time. The server will check technician availability
+                        before saving.
+                      </p>
+                      <form id="appointmentScheduleForm" novalidate>
+                        <div class="field">
+                          <label for="appointmentRescheduleDate">Date</label>
+                          <input
+                            id="appointmentRescheduleDate"
+                            name="appointmentDate"
+                            type="date"
+                            required
+                          />
+                          <span
+                            class="field-error"
+                            data-error-for="appointmentRescheduleDate"
+                          ></span>
+                        </div>
+                        <div class="field">
+                          <label for="appointmentRescheduleTime">Time</label>
+                          <input
+                            id="appointmentRescheduleTime"
+                            name="appointmentTime"
+                            type="time"
+                            required
+                          />
+                          <span
+                            class="field-error"
+                            data-error-for="appointmentRescheduleTime"
+                          ></span>
+                        </div>
+                        <div class="form-footer">
+                          <span></span>
+                          <button
+                            class="button button-secondary"
+                            type="submit"
+                            id="saveAppointmentScheduleButton"
+                          >
+                            Save schedule
+                          </button>
+                        </div>
+                      </form>
+                    </section>
+                    <section
+                      class="detail-action-card"
+                      id="appointmentStatusAction"
+                      aria-labelledby="appointmentStatusHeading"
+                    >
+                      <h4 id="appointmentStatusHeading">Update appointment status</h4>
+                      <p>Choose the next status allowed by the appointment workflow.</p>
+                      <form id="appointmentStatusForm" novalidate>
+                        <div class="field">
+                          <label for="appointmentNextStatus">Next status</label>
+                          <select id="appointmentNextStatus" name="status"></select>
+                          <span class="field-error" data-error-for="appointmentNextStatus"></span>
+                        </div>
+                        <div class="field">
+                          <label for="appointmentStatusReason"
+                            >Reason <span class="visually-hidden">(optional)</span></label
+                          >
+                          <textarea
+                            id="appointmentStatusReason"
+                            name="reason"
+                            maxlength="1000"
+                          ></textarea>
+                          <span class="field-error" data-error-for="appointmentStatusReason"></span>
+                        </div>
+                        <div class="form-footer">
+                          <span></span>
+                          <button
+                            class="button button-secondary"
+                            type="submit"
+                            id="updateAppointmentStatusButton"
+                          >
+                            Update status
+                          </button>
+                        </div>
+                      </form>
+                    </section>
+                  </div>
+                  <div class="form-footer appointment-detail-footer">
+                    <span></span>
+                    <button
+                      class="button button-outline"
+                      type="button"
+                      id="downloadAppointmentIcsButton"
+                    >
+                      Download calendar file
+                    </button>
+                  </div>
+                  <h4>Appointment history</h4>
+                  <ol class="history" id="appointmentHistoryList"></ol>
                 </div>
               </div>
             </div>

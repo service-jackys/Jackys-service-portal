@@ -37,6 +37,7 @@ export type RouteDefinition = {
     | 'availability'
     | 'appointment'
     | 'appointmentAssignment'
+    | 'appointmentSchedule'
     | 'appointmentStatus'
     | 'draftSchedule';
   parameters?: object[];
@@ -226,6 +227,10 @@ export function createRouteCatalog(localAuth: LocalAuth | null): RouteDefinition
             providerUnavailable(response),
         ],
         status: [
+          (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
+            providerUnavailable(response),
+        ],
+        schedule: [
           (_request: Parameters<RequestHandler>[0], response: Parameters<RequestHandler>[1]) =>
             providerUnavailable(response),
         ],
@@ -759,6 +764,18 @@ export function createRouteCatalog(localAuth: LocalAuth | null): RouteDefinition
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: [200, 400, 401, 403, 404, 409, 500],
         handlers: appointmentHandlers.assignment,
+      },
+      {
+        method: 'patch' as const,
+        path: '/api/appointments/{id}/schedule',
+        operationId: 'rescheduleAppointment',
+        tags: ['Appointments'],
+        summary: 'Reschedule an appointment',
+        security: 'bearerAuth' as const,
+        requestBody: 'appointmentSchedule' as const,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: [200, 400, 401, 403, 404, 409, 500],
+        handlers: appointmentHandlers.schedule,
       },
       {
         method: 'patch' as const,

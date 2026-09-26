@@ -22,6 +22,12 @@ function nextDateForWeekday(weekday: number): string {
   return date.toISOString().slice(0, 10);
 }
 
+function addDays(value: string, days: number): string {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 test(
   'Phase3 scheduling couples appointments, complaints, technicians, and draft promotion transactionally',
   { skip: !databaseUrl, concurrency: false },
@@ -128,6 +134,116 @@ test(
       assert.match(appointment.appointmentReference, /^APT-\d{4}-\d{5}$/);
       assert.equal(appointment.status, 'Scheduled');
 
+      const rescheduledDate = addDays(date, 7);
+      const rescheduled = await appointmentService.reschedule(
+        appointment.id,
+        { appointmentDate: rescheduledDate, appointmentTime: '11:00' },
+        profileId,
+        'phase4-reschedule-success',
+      );
+      assert.equal(rescheduled.appointmentDate, rescheduledDate);
+      assert.equal(rescheduled.appointmentTime, '11:00');
+      assert.equal(rescheduled.technicianId, technician.id);
+
+      const audit = await pool.query<{
+        action: string;
+        requestId: string;
+        metadata: {
+          fromDate: string;
+          fromTime: string;
+          toDate: string;
+          toTime: string;
+          technicianId: string;
+        };
+      }>(
+        `SELECT action, request_id AS "requestId", metadata
+         FROM audit_events
+         WHERE target_type = 'appointment' AND target_id = $1 AND request_id = $2`,
+        [appointment.id, 'phase4-reschedule-success'],
+      );
+      assert.deepEqual(audit.rows[0], {
+        action: 'appointment.schedule_changed',
+        requestId: 'phase4-reschedule-success',
+        metadata: {
+          fromDate: date,
+          fromTime: '09:00',
+          toDate: rescheduledDate,
+          toTime: '11:00',
+          technicianId: technician.id,
+        },
+      });
+
+      await assert.rejects(
+        appointmentService.reschedule(
+          appointment.id,
+          { appointmentDate: addDays(rescheduledDate, 1), appointmentTime: '12:00' },
+          profileId,
+          'phase4-reschedule-unavailable',
+        ),
+        (error: unknown) =>
+          error instanceof AppointmentServiceError && error.code === 'technician-unavailable',
+      );
+      const unchangedAfterUnavailable = await appointmentService.detail(appointment.id);
+      assert.equal(unchangedAfterUnavailable.appointment.appointmentDate, rescheduledDate);
+      assert.equal(unchangedAfterUnavailable.appointment.appointmentTime, '11:00');
+
+      const conflictComplaint = await complaintService.submit(
+        {
+          customerType: 'individual',
+          customerName: 'Phase4 Conflict Customer',
+          contactNumber: '0500000310',
+          description: 'Phase4 conflict appointment',
+          region: 'Dubai',
+        },
+        'phase4-conflict-complaint',
+      );
+      complaintIds.push(conflictComplaint.id);
+      await complaintService.changeStatus(
+        conflictComplaint.id,
+        { status: 'Under Review' },
+        profileId,
+      );
+      await complaintService.changeStatus(
+        conflictComplaint.id,
+        { status: 'Ready for Scheduling' },
+        profileId,
+      );
+      const conflictAppointment = await appointmentService.create(
+        {
+          complaintId: conflictComplaint.id,
+          technicianId: technician.id,
+          appointmentDate: addDays(rescheduledDate, 7),
+          appointmentTime: '11:00',
+        },
+        profileId,
+        'phase4-conflict-create',
+      );
+      appointmentIds.push(conflictAppointment.id);
+
+      await assert.rejects(
+        appointmentService.reschedule(
+          appointment.id,
+          { appointmentDate: addDays(rescheduledDate, 7), appointmentTime: '11:00' },
+          profileId,
+          'phase4-reschedule-conflict',
+        ),
+        (error: unknown) =>
+          error instanceof AppointmentServiceError && error.code === 'technician-conflict',
+      );
+      const unchangedAfterConflict = await appointmentService.detail(appointment.id);
+      assert.equal(unchangedAfterConflict.appointment.appointmentDate, rescheduledDate);
+      assert.equal(unchangedAfterConflict.appointment.appointmentTime, '11:00');
+
+      await assert.rejects(
+        appointmentService.reschedule(
+          '999999999',
+          { appointmentDate: rescheduledDate, appointmentTime: '11:00' },
+          profileId,
+          'phase4-reschedule-missing',
+        ),
+        (error: unknown) => error instanceof AppointmentServiceError && error.code === 'not-found',
+      );
+
       const linkedComplaint = await complaintService.detail(complaint.id);
       assert.equal(linkedComplaint.complaint.status, 'Scheduled');
       assert.deepEqual(
@@ -179,6 +295,16 @@ test(
         (await complaintService.detail(complaint.id)).complaint.status,
         'Ready for Scheduling',
       );
+      await assert.rejects(
+        appointmentService.reschedule(
+          appointment.id,
+          { appointmentDate: addDays(date, 14), appointmentTime: '09:00' },
+          profileId,
+          'phase4-reschedule-cancelled',
+        ),
+        (error: unknown) =>
+          error instanceof AppointmentServiceError && error.code === 'terminal-appointment',
+      );
 
       const rebooked = await appointmentService.create(
         {
@@ -206,6 +332,16 @@ test(
       assert.equal(completed.status, 'Completed');
       assert.ok(completed.closedAt);
       assert.equal((await complaintService.detail(complaint.id)).complaint.status, 'Closed');
+      await assert.rejects(
+        appointmentService.reschedule(
+          rebooked.id,
+          { appointmentDate: addDays(date, 21), appointmentTime: '09:00' },
+          profileId,
+          'phase4-reschedule-completed',
+        ),
+        (error: unknown) =>
+          error instanceof AppointmentServiceError && error.code === 'terminal-appointment',
+      );
 
       const draftComplaint = await complaintService.submit(
         {

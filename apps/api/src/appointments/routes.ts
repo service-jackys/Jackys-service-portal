@@ -12,7 +12,8 @@ function serviceError(error: unknown, response: Parameters<RequestHandler>[1]): 
           error.code === 'technician-unavailable' ||
           error.code === 'technician-conflict' ||
           error.code === 'active-appointment-conflict' ||
-          error.code === 'complaint-not-schedulable'
+          error.code === 'complaint-not-schedulable' ||
+          error.code === 'terminal-appointment'
         ? 409
         : 500;
   const type =
@@ -116,6 +117,28 @@ export function createAppointmentHandlers(
           const auth = response.locals.auth as ApplicationAuth;
           response.json({
             appointment: await service.assign(
+              String(request.params.id),
+              request.body,
+              auth.profileId,
+              request.header('x-request-id') ?? undefined,
+            ),
+          });
+        } catch (error) {
+          if (error instanceof AppointmentServiceError) {
+            serviceError(error, response);
+            return;
+          }
+          next(error);
+        }
+      },
+    ],
+    schedule: [
+      requirePermission('appointments.write'),
+      async (request, response, next) => {
+        try {
+          const auth = response.locals.auth as ApplicationAuth;
+          response.json({
+            appointment: await service.reschedule(
               String(request.params.id),
               request.body,
               auth.profileId,

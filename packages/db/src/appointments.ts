@@ -59,7 +59,7 @@ const columns = `
   appointments.job_warranty AS "jobWarranty",
   appointments.sales_order_number AS "salesOrderNumber",
   appointments.appointment_date::text AS "appointmentDate",
-  appointments.appointment_time::text AS "appointmentTime",
+  to_char(appointments.appointment_time, 'HH24:MI') AS "appointmentTime",
   appointments.status,
   appointments.closed_at AS "closedAt",
   appointments.created_at AS "createdAt",
@@ -156,6 +156,20 @@ export async function updateAppointmentAssignment(
   const result = await client.query<AppointmentRecord>(
     `UPDATE appointments SET technician_id = $2, updated_by = $3, updated_at = now() WHERE id = $1 RETURNING ${columns}`,
     [id, technicianId, profileId],
+  );
+  return result.rows[0] ?? null;
+}
+
+export async function updateAppointmentSchedule(
+  client: PoolClient,
+  id: string,
+  appointmentDate: string,
+  appointmentTime: string,
+  profileId: string,
+): Promise<AppointmentRecord | null> {
+  const result = await client.query<AppointmentRecord>(
+    `UPDATE appointments SET appointment_date = $2, appointment_time = $3, updated_by = $4, updated_at = now() WHERE id = $1 RETURNING ${columns}`,
+    [id, appointmentDate, appointmentTime, profileId],
   );
   return result.rows[0] ?? null;
 }

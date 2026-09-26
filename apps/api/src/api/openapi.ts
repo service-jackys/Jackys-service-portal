@@ -113,6 +113,14 @@ const requestBodies = {
       },
     },
   },
+  appointmentSchedule: {
+    required: true,
+    content: {
+      'application/json': {
+        schema: { $ref: '#/components/schemas/AppointmentScheduleRequest' },
+      },
+    },
+  },
   appointmentStatus: {
     required: true,
     content: {
@@ -361,6 +369,15 @@ export function createOpenApiDocument(routes: RouteDefinition[]) {
           additionalProperties: false,
           required: ['technicianId'],
           properties: { technicianId: { type: ['string', 'null'], pattern: '^\\d+$' } },
+        },
+        AppointmentScheduleRequest: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['appointmentDate', 'appointmentTime'],
+          properties: {
+            appointmentDate: { type: 'string', format: 'date' },
+            appointmentTime: { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' },
+          },
         },
         AppointmentStatusRequest: {
           type: 'object',

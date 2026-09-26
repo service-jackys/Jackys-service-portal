@@ -5,6 +5,7 @@ import {
   appointmentAssignmentSchema,
   appointmentCreateSchema,
   appointmentListQuerySchema,
+  appointmentScheduleUpdateSchema,
   appointmentStatusSchema,
   appointmentStatusUpdateSchema,
   appointmentTransitions,
@@ -19,6 +20,7 @@ import {
   listAppointmentHistory,
   listAppointments,
   updateAppointmentAssignment,
+  updateAppointmentSchedule,
   updateAppointmentStatus,
 } from '../../../../packages/db/src/appointments.js';
 import { insertAuditEvent } from '../../../../packages/db/src/audit.js';
@@ -42,7 +44,8 @@ export class AppointmentServiceError extends Error {
       | 'technician-unavailable'
       | 'technician-conflict'
       | 'active-appointment-conflict'
-      | 'complaint-not-schedulable',
+      | 'complaint-not-schedulable'
+      | 'terminal-appointment',
     message: string,
   ) {
     super(message);
@@ -325,6 +328,88 @@ export function createAppointmentService(pool: Pool) {
     });
   }
 
+  async function reschedule(
+    id: string,
+    input: unknown,
+    profileId: string,
+    requestId: string = randomUUID(),
+  ) {
+    const data = appointmentScheduleUpdateSchema.parse(input);
+    return withTransaction(pool, async (client) => {
+      const current = await findAppointmentById(client, id, true);
+      if (!current)
+        throw new AppointmentServiceError('not-found', 'The appointment was not found.');
+      if (current.status === 'Completed' || current.status === 'Cancelled') {
+        throw new AppointmentServiceError(
+          'terminal-appointment',
+          `A ${current.status.toLowerCase()} appointment cannot be rescheduled.`,
+        );
+      }
+      if (current.technicianId) {
+        const technician = await findTechnicianById(client, current.technicianId, true);
+        if (!technician)
+          throw new AppointmentServiceError('not-found', 'The technician was not found.');
+        if (!technician.active) {
+          throw new AppointmentServiceError(
+            'technician-unavailable',
+            'The assigned technician is inactive.',
+          );
+        }
+        if (
+          !(await hasTechnicianAvailability(
+            client,
+            current.technicianId,
+            data.appointmentDate,
+            data.appointmentTime,
+          ))
+        ) {
+          throw new AppointmentServiceError(
+            'technician-unavailable',
+            'The assigned technician is not available at the requested time.',
+          );
+        }
+        if (
+          await findTechnicianConflict(
+            client,
+            current.technicianId,
+            data.appointmentDate,
+            data.appointmentTime,
+            id,
+          )
+        ) {
+          throw new AppointmentServiceError(
+            'technician-conflict',
+            'The assigned technician already has an appointment at the requested time.',
+          );
+        }
+      }
+      const appointment = await updateAppointmentSchedule(
+        client,
+        id,
+        data.appointmentDate,
+        data.appointmentTime,
+        profileId,
+      );
+      if (!appointment)
+        throw new AppointmentServiceError('not-found', 'The appointment was not found.');
+      await insertAuditEvent(client, {
+        actorProfileId: profileId,
+        action: 'appointment.schedule_changed',
+        targetType: 'appointment',
+        targetId: id,
+        metadata: {
+          fromDate: current.appointmentDate,
+          fromTime: current.appointmentTime,
+          toDate: data.appointmentDate,
+          toTime: data.appointmentTime,
+          technicianId: current.technicianId,
+        },
+        requestId,
+      });
+      return appointment;
+    });
+  }
+
   async function changeStatus(
     id: string,
     input: unknown,
@@ -399,7 +484,7 @@ export function createAppointmentService(pool: Pool) {
     });
   }
 
-  return { create, list, detail, history, ics, assign, changeStatus };
+  return { create, list, detail, history, ics, assign, reschedule, changeStatus };
 }
 
 export type AppointmentService = ReturnType<typeof createAppointmentService>;
